@@ -20,8 +20,8 @@ type RegisterReq struct {
 }
 
 type LoginReq struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Identifier string `json:"identifier"`
+	Password   string `json:"password"`
 }
 
 func AuthRoutes() *chi.Mux {
@@ -36,7 +36,7 @@ func AuthRoutes() *chi.Mux {
 		}
 
 		var user database.User
-		if err := db.Where("username = ?", req.Username).First(&user).Error; err != nil {
+		if err := db.Where("username = ? OR email = ?", req.Identifier, req.Identifier).First(&user).Error; err != nil {
 			http.Error(w, "invalid credentials", http.StatusUnauthorized)
 			return
 		}
@@ -71,7 +71,7 @@ func AuthRoutes() *chi.Mux {
 			Path:     "/",
 			Expires:  expiry,
 			HttpOnly: true,
-			SameSite: http.SameSiteLaxMode,
+			SameSite: http.SameSiteNoneMode,
 			Secure:   secure,
 		})
 
@@ -123,6 +123,38 @@ func AuthRoutes() *chi.Mux {
 		response := map[string]string{"message": "register successful"}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
+	})
+
+	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		sessionToken := cookie.Value
+
+		var session database.Session
+		if err := db.
+			Preload("User").
+			Where("token = ?", sessionToken).
+			First(&session).Error; err != nil {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		if time.Now().After(session.ExpiresAt) {
+			http.Error(w, "session expired", http.StatusUnauthorized)
+			return
+		}
+
+		resp := map[string]any{
+			"email":    session.User.Email,
+			"username": session.User.Username,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
 	})
 
 	return r
