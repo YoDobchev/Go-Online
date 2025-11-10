@@ -8,6 +8,7 @@ type RegisterResponse = {
 };
 
 const Register: React.FC = () => {
+    const [email, setEmail] = useState<string>("");
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [message, setMessage] = useState<string>("");
@@ -21,7 +22,7 @@ const Register: React.FC = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({email, username, password }),
             });
 
             if (!res.ok) {
@@ -40,6 +41,18 @@ const Register: React.FC = () => {
     return (
         <div className="auth">
             <form onSubmit={handleSubmit}>
+                <div>
+                    <label htmlFor="email">Email</label>
+                    <input
+                        id="email"
+                        type="email"
+                        name="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                    />
+                </div>
+
                 <div>
                     <label htmlFor="username">Username</label>
                     <input

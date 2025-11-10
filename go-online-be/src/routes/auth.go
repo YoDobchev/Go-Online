@@ -4,13 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type RegisterReq struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type LoginReq struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
@@ -20,13 +29,59 @@ func AuthRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte("heloo"))
+		var req LoginReq
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "invalid JSON", http.StatusBadRequest)
+			return
+		}
 
+		var user database.User
+		if err := db.Where("username = ?", req.Username).First(&user).Error; err != nil {
+			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			return
+		}
+
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+			http.Error(w, "invalid credentials", http.StatusUnauthorized)
+			return
+		}
+
+		var secure bool
+		if env := os.Getenv("ENV"); env == "prod" {
+			secure = true
+		}
+
+		sessionToken := uuid.NewString()
+		expiry := time.Now().Add(24 * time.Hour)
+
+		session := database.Session{
+			UserID:    user.Id,
+			Token:     sessionToken,
+			ExpiresAt: expiry,
+		}
+
+		if err := db.Create(&session).Error; err != nil {
+			http.Error(w, "could not create session", http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    sessionToken,
+			Path:     "/",
+			Expires:  expiry,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			Secure:   secure,
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "login successful",
+		})
 	})
 
 	r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-
 		fmt.Println("bruuu")
 		var req RegisterReq
 
@@ -55,6 +110,7 @@ func AuthRoutes() *chi.Mux {
 		}
 
 		newUser := database.User{
+			Email:    req.Email,
 			Username: req.Username,
 			Password: string(hash),
 		}

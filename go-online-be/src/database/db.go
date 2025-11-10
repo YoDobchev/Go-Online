@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -14,8 +15,20 @@ import (
 var DB *gorm.DB
 
 type User struct {
-	Username string `gorm:"primaryKey" json:"username"`
-	Password string `json:"password"`
+	Id       int    `gorm:"primaryKey"`
+	Email    string `gorm:"unique;not null"`
+	Username string `gorm:"unique;not null"`
+	Password string `gorm:"not null"`
+}
+
+type Session struct {
+	ID     string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
+	UserID int    `gorm:"not null"`
+	User   User   `gorm:"constraint:OnDelete:CASCADE;"`
+
+	Token     string    `gorm:"unique;not null"`
+	CreatedAt time.Time `gorm:"not null;autoCreateTime"`
+	ExpiresAt time.Time `gorm:"not null"`
 }
 
 func Connect() {
@@ -36,6 +49,7 @@ func Connect() {
 		dbName,
 		dbPort,
 	)
+
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error loading db: %v", err)
@@ -43,7 +57,7 @@ func Connect() {
 
 	DB = db
 
-	if err := db.AutoMigrate(&User{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &Session{}); err != nil {
 		log.Fatalf("auto-migrate failed: %v", err)
 	}
 	ctx := context.Background()

@@ -12,7 +12,7 @@ const Login: React.FC = () => {
         e.preventDefault();
 
         try {
-            const res = await fetch(`${API_BASE}/api/login`, {
+            const res = await fetch(`${API_BASE}/api/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
