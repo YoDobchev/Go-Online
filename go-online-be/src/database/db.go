@@ -5,38 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
-	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var DB *gorm.DB
 
-type User struct {
-	ID       int    `gorm:"primaryKey"`
-	Email    string `gorm:"unique;not null"`
-	Username string `gorm:"unique;not null"`
-	Password string `gorm:"not null"`
-}
-
-type Session struct {
-	ID     string `gorm:"type:uuid;default:gen_random_uuid();primaryKey"`
-	UserID int    `gorm:"not null"`
-	User   User   `gorm:"constraint:OnDelete:CASCADE;"`
-
-	Token     string    `gorm:"unique;not null"`
-	CreatedAt time.Time `gorm:"not null;autoCreateTime"`
-	ExpiresAt time.Time `gorm:"not null"`
-}
-
 func Connect() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env: %v", err)
-	}
-
 	dbUser := os.Getenv("DB_USERNAME")
 	dbPass := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB")
