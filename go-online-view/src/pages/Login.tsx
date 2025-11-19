@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import "../styles/auth.scss";
-
-const API_BASE = import.meta.env.VITE_API_URL as string;
+import { useNavigate } from "react-router-dom";
+import { API_BASE } from "../config";
 
 const Login: React.FC = () => {
-    const [username, setUsername] = useState<string>("");
+    const [identifier, setIdentifier] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [message, setMessage] = useState<string>("");
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -17,7 +18,8 @@ const Login: React.FC = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ username, password }),
+                credentials: "include",
+                body: JSON.stringify({ identifier, password }),
             });
 
             if (!res.ok) {
@@ -25,9 +27,11 @@ const Login: React.FC = () => {
             }
 
             setMessage(`logged in`);
+
+            setTimeout(() => navigate("/"), 500);
         } catch (err) {
             console.error(err);
-            setMessage("invalid username or password");
+            setMessage("invalid identifier or password");
         }
     };
 
@@ -35,13 +39,13 @@ const Login: React.FC = () => {
         <div className="auth">
             <form onSubmit={handleSubmit}>
                 <div>
-                    <label htmlFor="username">Username</label>
+                    <label htmlFor="identifier">Email or Password</label>
                     <input
-                        id="username"
+                        id="identifier"
                         type="text"
-                        name="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        name="identifier"
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
                         required
                     />
                 </div>

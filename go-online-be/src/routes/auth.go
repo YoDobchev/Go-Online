@@ -55,7 +55,7 @@ func AuthRoutes() *chi.Mux {
 		expiry := time.Now().Add(24 * time.Hour)
 
 		session := database.Session{
-			UserID:    user.Id,
+			UserID:    user.ID,
 			Token:     sessionToken,
 			ExpiresAt: expiry,
 		}
@@ -71,7 +71,7 @@ func AuthRoutes() *chi.Mux {
 			Path:     "/",
 			Expires:  expiry,
 			HttpOnly: true,
-			SameSite: http.SameSiteNoneMode,
+			SameSite: http.SameSiteLaxMode,
 			Secure:   secure,
 		})
 
@@ -128,6 +128,7 @@ func AuthRoutes() *chi.Mux {
 	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
 		if err != nil {
+			fmt.Println(err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -139,11 +140,13 @@ func AuthRoutes() *chi.Mux {
 			Preload("User").
 			Where("token = ?", sessionToken).
 			First(&session).Error; err != nil {
+			fmt.Println(err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		if time.Now().After(session.ExpiresAt) {
+			fmt.Println(err)
 			http.Error(w, "session expired", http.StatusUnauthorized)
 			return
 		}

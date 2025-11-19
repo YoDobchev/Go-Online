@@ -15,7 +15,7 @@ import (
 var DB *gorm.DB
 
 type User struct {
-	Id       int    `gorm:"primaryKey"`
+	ID       int    `gorm:"primaryKey"`
 	Email    string `gorm:"unique;not null"`
 	Username string `gorm:"unique;not null"`
 	Password string `gorm:"not null"`
