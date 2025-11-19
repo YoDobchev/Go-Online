@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import "../styles/auth.scss";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
+import { UserContext } from "../context/UserContext";
 
 const Login: React.FC = () => {
+    const { setUser } = useContext(UserContext);
     const [identifier, setIdentifier] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [message, setMessage] = useState<string>("");
@@ -25,6 +27,13 @@ const Login: React.FC = () => {
             if (!res.ok) {
                 throw new Error("Login failed");
             }
+
+            const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+                credentials: "include",
+            });
+            const me = meRes.ok ? await meRes.json() : null;
+
+            setUser(me);
 
             setMessage(`logged in`);
 
