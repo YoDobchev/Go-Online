@@ -26,20 +26,19 @@ func Connect() {
 		dbPort,
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Error loading db: %v", err)
 	}
 
-	DB = db
-
-	if err := db.AutoMigrate(&User{}, &Session{}); err != nil {
+	if err := DB.AutoMigrate(&User{}, &Session{}); err != nil {
 		log.Fatalf("auto-migrate failed: %v", err)
 	}
 	ctx := context.Background()
 
 	var user User
-	if err := db.WithContext(ctx).Take(&user).Error; err != nil {
+	if err := DB.WithContext(ctx).Take(&user).Error; err != nil {
 		log.Println("could not get user:", err)
 	} else {
 		fmt.Println("user from db:", user)
