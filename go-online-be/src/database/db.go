@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -34,13 +33,5 @@ func Connect() {
 
 	if err := DB.AutoMigrate(&User{}, &Session{}); err != nil {
 		log.Fatalf("auto-migrate failed: %v", err)
-	}
-	ctx := context.Background()
-
-	var user User
-	if err := DB.WithContext(ctx).Take(&user).Error; err != nil {
-		log.Println("could not get user:", err)
-	} else {
-		fmt.Println("user from db:", user)
 	}
 }

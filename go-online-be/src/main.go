@@ -24,5 +24,6 @@ func main() {
 		port = "3000"
 	}
 
+	log.Printf("Listening on :%v...", port)
 	http.ListenAndServe(":"+port, r)
 }

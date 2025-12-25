@@ -15,7 +15,7 @@ const Login: React.FC = () => {
         e.preventDefault();
 
         try {
-            const res = await fetch(`${API_BASE}/api/auth/login`, {
+            const res = await fetch(`${API_BASE}/auth/login`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -28,7 +28,7 @@ const Login: React.FC = () => {
                 throw new Error("Login failed");
             }
 
-            const meRes = await fetch(`${API_BASE}/api/auth/me`, {
+            const meRes = await fetch(`${API_BASE}/auth/me`, {
                 credentials: "include",
             });
             const me = meRes.ok ? await meRes.json() : null;
@@ -46,6 +46,7 @@ const Login: React.FC = () => {
 
     return (
         <div className="auth">
+            <a href="/">ddd</a>
             <form onSubmit={handleSubmit}>
                 <div>
                     <label htmlFor="identifier">Email or Password</label>

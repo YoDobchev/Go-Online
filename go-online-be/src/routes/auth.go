@@ -82,7 +82,6 @@ func AuthRoutes() *chi.Mux {
 	})
 
 	r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("bruuu")
 		var req RegisterReq
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -128,7 +127,6 @@ func AuthRoutes() *chi.Mux {
 	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
 		if err != nil {
-			fmt.Println(err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -140,13 +138,11 @@ func AuthRoutes() *chi.Mux {
 			Preload("User").
 			Where("token = ?", sessionToken).
 			First(&session).Error; err != nil {
-			fmt.Println(err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
 
 		if time.Now().After(session.ExpiresAt) {
-			fmt.Println(err)
 			http.Error(w, "session expired", http.StatusUnauthorized)
 			return
 		}
@@ -158,6 +154,38 @@ func AuthRoutes() *chi.Mux {
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(resp)
+	})
+
+	r.Delete("/logout", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			fmt.Println(err)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		sessionToken := cookie.Value
+
+		if err := db.Where("token = ?", sessionToken).Delete(&database.Session{}).Error; err != nil {
+			http.Error(w, "could not logout", http.StatusInternalServerError)
+			return
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    "",
+			Path:     "/",
+			Expires:  time.Unix(0, 0),
+			MaxAge:   -1,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			Secure:   os.Getenv("ENV") == "prod",
+		})
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "logout successful",
+		})
 	})
 
 	return r

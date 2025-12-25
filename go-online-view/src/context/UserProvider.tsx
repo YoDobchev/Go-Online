@@ -13,7 +13,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     useEffect(() => {
         const fetchMe = async () => {
             try {
-                const res = await fetch(`${API_BASE}/api/auth/me`, {
+                const res = await fetch(`${API_BASE}/auth/me`, {
                     credentials: "include",
                 });
                 if (res.ok) {
