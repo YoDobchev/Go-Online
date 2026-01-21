@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -159,7 +158,6 @@ func AuthRoutes() *chi.Mux {
 	r.Delete("/logout", func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("session")
 		if err != nil {
-			fmt.Println(err)
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
