@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { UserContext } from "./UserContext";
 import type { UserContextValue } from "./UserContext";
-
-const API_BASE = import.meta.env.VITE_API_URL as string;
+import { API_BASE } from "../config";
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
     children,
