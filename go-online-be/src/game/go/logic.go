@@ -40,7 +40,7 @@ func NewGame(boardSize int, players [2]string) (*Game, error) {
 		return nil, err
 	}
 	g.Board = board
-	g.chains = NewChainsMap(boardSize)
+	g.chains = NewChainsMap(board)
 
 	g.Players = players
 	g.CurrectTurn = Black
@@ -57,7 +57,6 @@ func switchTurn(g *Game) {
 	} else {
 		g.CurrectTurn = Black
 	}
-
 }
 
 func (g *Game) PlayMove(x, y int) error {
@@ -70,6 +69,7 @@ func (g *Game) PlayMove(x, y int) error {
 	if err != nil {
 		return err
 	}
+	g.chains.AddStone(x, y, g.CurrectTurn)
 
 	switchTurn(g)
 	return nil
@@ -77,4 +77,5 @@ func (g *Game) PlayMove(x, y int) error {
 
 func (g *Game) Print() {
 	g.Board.PrintBoard()
+	g.chains.PrintGroups()
 }

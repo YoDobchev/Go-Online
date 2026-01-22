@@ -55,7 +55,7 @@ func stoneToEmoji(stone uint8) (rune, error) {
 	case Black:
 		return '●', nil
 	default:
-		return 0, fmt.Errorf("invalid stone val %d", stone)
+		return 0, fmt.Errorf("Invalid stone val %d", stone)
 	}
 }
 
@@ -77,4 +77,12 @@ func (b *Board) isInBounds(x, y int) bool {
 
 func (b *Board) isEmpty(x, y int) bool {
 	return b.Squares[x][y].stone == Empty
+}
+
+func (b *Board) GetSquare(x, y int) (Square, error) {
+	if !b.isInBounds(x, y) {
+		return Square{}, fmt.Errorf("%w, x: %d, y: %d", ErrInvalidCoordinates, x, y)
+	}
+
+	return b.Squares[x][y], nil
 }
