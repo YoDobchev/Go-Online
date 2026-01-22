@@ -72,7 +72,7 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 	for !quit {
-		g.PrintBoard()
+		g.Print()
 
 		var playerTurnName string
 		if g.CurrectTurn == gogame.Black {

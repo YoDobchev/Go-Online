@@ -11,48 +11,45 @@ const (
 	Black
 )
 
-type Square struct {
-	stone uint8
+type Groups struct {
+	Map        [][]uint64 // [x][y][group]
+	GroupCount uint64
+	Liberties  map[uint64]uint64 // [group] -> num of liberties
 }
-
-const (
-	BLACK_TURN = false
-	WHITE_TURN = true
-)
 
 type Game struct {
 	Players     [2]string
 	CurrectTurn uint8
 
-	Board [][]Square
+	Board *Board
+
+	hash uint64
+	seen map[uint64]struct{} // for superko
+
+	groups Groups
 
 	rules string
-
-	groups map[int]*[]int
 }
 
 var (
 	ErrUnsupportedBoardSize = errors.New("unsupported board size")
 	ErrStoneAlreadyPlaced   = errors.New("Stone is already placed there")
+	ErrIllegalKoMove        = errors.New("Illegal Ko move (Superko rule)")
 )
 
 func NewGame(boardSize int, players [2]string) (*Game, error) {
-	switch boardSize {
-	case 9, 13, 19:
-	default:
-		return nil, fmt.Errorf("%w: %d", ErrUnsupportedBoardSize, boardSize)
-	}
-
 	g := new(Game)
-
-	g.Board = make([][]Square, boardSize)
-	for i := range g.Board {
-		g.Board[i] = make([]Square, boardSize)
+	board, err := NewBoard(boardSize)
+	if err != nil {
+		return nil, err
 	}
+	g.Board = board
 
 	g.Players = players
-
 	g.CurrectTurn = Black
+
+	zobristTable := NewZobristTable(boardSize)
+	g.hash = zobristTable.HashBoard(g.Board.Squares, true)
 
 	return g, nil
 }
@@ -66,12 +63,8 @@ func switchTurn(g *Game) {
 
 }
 
-func getNeighboursInfo(x, y int) {
-
-}
-
 func (g *Game) PlayMove(x, y int) error {
-	if g.Board[x][y].stone != Empty {
+	if !g.Board.isEmpty(x, y) {
 		return fmt.Errorf("%w, x: %d, y; %d", ErrStoneAlreadyPlaced, x, y)
 	}
 
@@ -81,34 +74,12 @@ func (g *Game) PlayMove(x, y int) error {
 		return nil
 	}
 
-	g.Board[x][y].stone = g.CurrectTurn
+	g.Board.Squares[x][y].stone = g.CurrectTurn
 
 	switchTurn(g)
 	return nil
 }
 
-func stoneToEmoji(stone uint8) (rune, error) {
-	switch stone {
-	case Empty:
-		return '·', nil
-	case White:
-		return '○', nil
-	case Black:
-		return '●', nil
-	default:
-		return 0, fmt.Errorf("invalid stone val %d", stone)
-	}
-}
-
-func (g *Game) PrintBoard() {
-	for i := range g.Board {
-		for j := range g.Board[i] {
-			r, err := stoneToEmoji(g.Board[i][j].stone)
-			if err != nil {
-				r = '?'
-			}
-			fmt.Printf("%c ", r)
-		}
-		fmt.Println()
-	}
+func (g *Game) Print() {
+	g.Board.PrintBoard()
 }
