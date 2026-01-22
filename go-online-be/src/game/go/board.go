@@ -59,6 +59,18 @@ func stoneToEmoji(stone uint8) (rune, error) {
 	}
 }
 
+func (b *Board) AddStone(x, y int, color uint8) error {
+	if !b.isInBounds(x, y) {
+		return fmt.Errorf("%w, x: %d, y: %d", ErrInvalidCoordinates, x, y)
+	}
+	if !b.isEmpty(x, y) {
+		return fmt.Errorf("%w, x: %d, y: %d", ErrStoneAlreadyPlaced, x, y)
+	}
+
+	b.Squares[x][y].stone = color
+	return nil
+}
+
 func (b *Board) isInBounds(x, y int) bool {
 	return x >= 0 && y >= 0 && x < b.Size && y < b.Size
 }

@@ -2,20 +2,15 @@ package gogame
 
 import (
 	"errors"
-	"fmt"
 )
+
+const PASS = -1
 
 const (
 	Empty uint8 = iota
 	White
 	Black
 )
-
-type Groups struct {
-	Map        [][]uint64 // [x][y][group]
-	GroupCount uint64
-	Liberties  map[uint64]uint64 // [group] -> num of liberties
-}
 
 type Game struct {
 	Players     [2]string
@@ -26,13 +21,14 @@ type Game struct {
 	hash uint64
 	seen map[uint64]struct{} // for superko
 
-	groups Groups
+	chains *ChainsMap
 
 	rules string
 }
 
 var (
-	ErrUnsupportedBoardSize = errors.New("unsupported board size")
+	ErrUnsupportedBoardSize = errors.New("Unsupported board size")
+	ErrInvalidCoordinates   = errors.New("Input coordinates are out of board bounds")
 	ErrStoneAlreadyPlaced   = errors.New("Stone is already placed there")
 	ErrIllegalKoMove        = errors.New("Illegal Ko move (Superko rule)")
 )
@@ -44,6 +40,7 @@ func NewGame(boardSize int, players [2]string) (*Game, error) {
 		return nil, err
 	}
 	g.Board = board
+	g.chains = NewChainsMap(boardSize)
 
 	g.Players = players
 	g.CurrectTurn = Black
@@ -64,17 +61,15 @@ func switchTurn(g *Game) {
 }
 
 func (g *Game) PlayMove(x, y int) error {
-	if !g.Board.isEmpty(x, y) {
-		return fmt.Errorf("%w, x: %d, y; %d", ErrStoneAlreadyPlaced, x, y)
-	}
-
-	const PASS = -1
 	if x == PASS {
 		switchTurn(g)
 		return nil
 	}
 
-	g.Board.Squares[x][y].stone = g.CurrectTurn
+	err := g.Board.AddStone(x, y, g.CurrectTurn)
+	if err != nil {
+		return err
+	}
 
 	switchTurn(g)
 	return nil
