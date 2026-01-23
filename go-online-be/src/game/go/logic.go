@@ -2,6 +2,7 @@ package gogame
 
 import (
 	"errors"
+	"fmt"
 )
 
 const PASS = -1
@@ -55,7 +56,6 @@ func NewGame(boardSize int, players [2]string) (*Game, error) {
 }
 
 func switchTurn(g *Game) {
-	g.hash = g.zobrist.ToggleSide(g.hash)
 	if g.CurrectTurn == Black {
 		g.CurrectTurn = White
 	} else {
@@ -83,7 +83,8 @@ func (g *Game) PlayMove(x, y int) error {
 		return ErrIllegalSelfCapture
 	}
 	oldHash := g.hash
-	g.hashMove(Stone{x, y, g.CurrectTurn}, sameColorCapturedChain, otherColorCapturedChains)
+	g.hashMove(Stone{x, y, g.CurrectTurn}, otherColorCapturedChains)
+	g.hash = g.zobrist.ToggleSide(g.hash)
 	_, found := g.seen[g.hash]
 	if found {
 		//Ko move
@@ -93,21 +94,17 @@ func (g *Game) PlayMove(x, y int) error {
 		return ErrIllegalKoMove
 	} else {
 		//Valid move
-		g.Board.RemoveChain(sameColorCapturedChain)
 		g.Board.RemoveChains(otherColorCapturedChains)
 		g.chains.applyCapture(sameColorCapturedChain, otherColorCapturedChains)
 	}
-
 	switchTurn(g)
 	g.seen[g.hash] = struct{}{}
+	fmt.Println(len(g.seen))
 	return nil
 }
 
-func (g *Game) hashMove(placedStone Stone, sameColorDeletedChain []Stone, otherColorDeletedChains [][]Stone) {
+func (g *Game) hashMove(placedStone Stone, otherColorDeletedChains [][]Stone) {
 	g.hash = g.zobrist.ToggleStone(g.hash, placedStone)
-	for _, stone := range sameColorDeletedChain {
-		g.hash = g.zobrist.ToggleStone(g.hash, stone)
-	}
 	for i := range otherColorDeletedChains {
 		for _, stone := range otherColorDeletedChains[i] {
 			g.hash = g.zobrist.ToggleStone(g.hash, stone)
@@ -117,5 +114,4 @@ func (g *Game) hashMove(placedStone Stone, sameColorDeletedChain []Stone, otherC
 
 func (g *Game) Print() {
 	g.Board.PrintBoard()
-	//g.chains.PrintGroups()
 }

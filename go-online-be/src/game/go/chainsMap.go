@@ -167,7 +167,6 @@ func (c *ChainsMap) getNeighbors(x, y int) []Stone {
 	neighbors = c.appendStone(x+1, y, neighbors)
 	neighbors = c.appendStone(x, y-1, neighbors)
 	neighbors = c.appendStone(x, y+1, neighbors)
-	fmt.Println(len(neighbors))
 	return neighbors
 }
 
