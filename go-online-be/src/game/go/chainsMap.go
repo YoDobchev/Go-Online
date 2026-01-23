@@ -8,6 +8,11 @@ type Stone struct {
 	color uint8
 }
 
+type Point struct {
+	x int
+	y int
+}
+
 const MAX_NEIGHBORS = 4
 
 type ChainsMap struct {
@@ -29,34 +34,114 @@ func NewChainsMap(board *Board) *ChainsMap {
 	return c
 }
 
-func (c *ChainsMap) AddStone(x, y int, color uint8) {
+func (c *ChainsMap) AddStone(x, y int, color uint8) ([]Stone, [][]Stone) {
+	current := Stone{x, y, color}
 	neighbors := c.getNeighbors(x, y)
 	sameColor, oppositeColor := groupByColor(neighbors, color)
+	sameColorCapturedChain := []Stone{}
+	otherColorCapturedChains := [][]Stone{}
 
-	liberties := len(neighbors) - len(oppositeColor) - len(sameColor)
-
-	//fmt.Printf("Same color %v", len(sameColor))
-	fmt.Println()
 	if len(sameColor) == 0 {
 		//Create a new chain
 		index := c.LastIndex + 1
 		c.Map[x][y] = index
-
-		//Calculate liberties
-		c.Liberties[index] = liberties
+		c.Liberties[index] = len(neighbors) - len(oppositeColor)
+		if c.Liberties[index] == 0 {
+			sameColorCapturedChain = []Stone{current}
+		}
 		c.LastIndex++
-	} else if len(sameColor) == 1 {
-		//Add to existing chain
-		neighbor := sameColor[0]
-		index := c.Map[neighbor.x][neighbor.y]
-		c.Map[x][y] = index
-
-		//Update liberties
-		c.Liberties[index] += (liberties - 1)
 	} else {
-		c.unifyChains(sameColor, liberties)
+		//Add to existing chain and merge chains if necessary
+		index := c.Map[sameColor[0].x][sameColor[0].y]
+		c.Map[x][y] = index
+		sameColorCapturedChain = c.updateChainDFS(current)
 	}
 
+	seen := make(map[int]struct{})
+	for _, o := range oppositeColor {
+		idx := c.Map[o.x][o.y]
+		if _, ok := seen[idx]; ok {
+			continue
+		}
+		seen[idx] = struct{}{}
+		chain := c.updateChainDFS(o)
+		if len(chain) > 0 {
+			otherColorCapturedChains = append(otherColorCapturedChains, chain)
+		}
+	}
+
+	return sameColorCapturedChain, otherColorCapturedChains
+}
+
+func (c *ChainsMap) Snapshot() ChainsMap {
+	mapCopy := make([][]int, len(c.Map))
+	for i := range c.Map {
+		mapCopy[i] = append([]int(nil), c.Map[i]...)
+	}
+
+	libsCopy := make(map[int]int, len(c.Liberties))
+	for k, v := range c.Liberties {
+		libsCopy[k] = v
+	}
+
+	return ChainsMap{
+		Map:       mapCopy,
+		Liberties: libsCopy,
+		LastIndex: c.LastIndex,
+	}
+}
+
+func (c *ChainsMap) Restore(snapshot ChainsMap) {
+	c.Map = snapshot.Map
+	c.Liberties = snapshot.Liberties
+	c.LastIndex = snapshot.LastIndex
+}
+
+func (c *ChainsMap) updateChainDFS(start Stone) []Stone {
+	visited := make(map[Point]struct{})
+	liberties := make(map[Point]struct{})
+	color := start.color
+	chainIndex := c.Map[start.x][start.y]
+
+	stack := []Point{{start.x, start.y}}
+	chain := []Stone{}
+	for len(stack) > 0 {
+		p := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if _, seen := visited[p]; seen {
+			continue
+		}
+		visited[p] = struct{}{}
+		c.Map[p.x][p.y] = chainIndex
+		chain = append(chain, Stone{p.x, p.y, color})
+
+		for _, n := range c.getNeighbors(p.x, p.y) {
+			switch n.color {
+			case Empty:
+				liberties[Point{n.x, n.y}] = struct{}{}
+			case color:
+				stack = append(stack, Point{n.x, n.y})
+			}
+		}
+	}
+	c.Liberties[chainIndex] = len(liberties)
+
+	if len(liberties) == 0 {
+		return chain
+	}
+	return []Stone{}
+}
+
+func (c *ChainsMap) applyCapture(sameColorCapturedChain []Stone, otherColorCapturedChains [][]Stone) {
+	for _, s := range sameColorCapturedChain {
+		c.Map[s.x][s.y] = 0
+	}
+	for i := range otherColorCapturedChains {
+		for _, s := range otherColorCapturedChains[i] {
+			c.Map[s.x][s.y] = 0
+		}
+	}
 }
 
 func groupByColor(neighbors []Stone, color uint8) ([]Stone, []Stone) {
@@ -74,37 +159,6 @@ func groupByColor(neighbors []Stone, color uint8) ([]Stone, []Stone) {
 		}
 	}
 	return sameColor, oppositeColor
-}
-
-func (c *ChainsMap) unifyChains(sameColor []Stone, liberties int) {
-	neighborGroups := make(map[int]struct{})
-	for _, n := range sameColor {
-		group := c.Map[n.x][n.y]
-		_, found := neighborGroups[group]
-		if !found {
-			neighborGroups[group] = struct{}{}
-		}
-	}
-
-	unifiedGroup := c.Map[sameColor[0].x][sameColor[0].y]
-
-	//Calculate liberties
-	libertiesSum := liberties - len(neighborGroups)
-	for i := range neighborGroups {
-		libertiesSum += c.Liberties[i]
-	}
-	c.Liberties[unifiedGroup] = libertiesSum
-
-	//Reassign group indexes to new unifiedGroup index
-	for i := range c.Map {
-		for j := range c.Map[i] {
-			oldGroup := c.Map[i][j]
-			_, found := neighborGroups[oldGroup]
-			if found {
-				c.Map[i][j] = unifiedGroup
-			}
-		}
-	}
 }
 
 func (c *ChainsMap) getNeighbors(x, y int) []Stone {

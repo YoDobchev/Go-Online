@@ -42,3 +42,11 @@ func (z *Zobrist) HashBoard(board [][]Square, blackToMove bool) uint64 {
 	}
 	return h
 }
+
+func (z *Zobrist) ToggleStone(hash uint64, stone Stone) uint64 {
+	return hash ^ z.Board[stone.x][stone.y][stone.color]
+}
+
+func (z *Zobrist) ToggleSide(hash uint64) uint64 {
+	return hash ^ z.SideToMove
+}

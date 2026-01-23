@@ -71,6 +71,22 @@ func (b *Board) AddStone(x, y int, color uint8) error {
 	return nil
 }
 
+func (b *Board) RemoveStone(x, y int) {
+	b.Squares[x][y].stone = Empty
+}
+
+func (b *Board) RemoveChain(chain []Stone) {
+	for _, s := range chain {
+		b.RemoveStone(s.x, s.y)
+	}
+}
+
+func (b *Board) RemoveChains(chains [][]Stone) {
+	for _, c := range chains {
+		b.RemoveChain(c)
+	}
+}
+
 func (b *Board) isInBounds(x, y int) bool {
 	return x >= 0 && y >= 0 && x < b.Size && y < b.Size
 }
