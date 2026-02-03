@@ -6,13 +6,20 @@ import (
 
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/middleware"
+	ws "github.com/YoDobchev/Go-Online/src/websocket"
 	"github.com/go-chi/chi/v5"
 )
 
 func GamesRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
-	r.Get("/{id}", getGameHandler)
+	g, _ := gogame.NewGame(19, "admin")
+	g.ID = "000"
+	g.Join("dummy")
+	gogame.GameInstances["000"] = g
+
+	r.Get("/{id}/ws", ws.WsGameHandler)
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
 
@@ -21,27 +28,6 @@ func GamesRoutes() *chi.Mux {
 	})
 
 	return r
-}
-
-func getGameHandler(w http.ResponseWriter, r *http.Request) {
-	gameID := chi.URLParam(r, "id")
-
-	game, exists := gogame.GameInstances[gameID]
-	if !exists {
-		http.Error(w, "game not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(struct {
-		Players [2]string     `json:"players"`
-		Turn    uint8         `json:"turn"`
-		Board   *gogame.Board `json:"board"`
-	}{
-		Players: game.Players,
-		Turn:    game.CurrectTurn,
-		Board:   game.Board,
-	})
 }
 
 func getIfInGameHandler(w http.ResponseWriter, r *http.Request) {
