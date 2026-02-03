@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
 
 interface GameStatus {
@@ -27,6 +28,8 @@ const GameCurrIn: React.FC = () => {
         fetchGameStatus();
     }, []);
 
+    const navigate = useNavigate();
+
     const createNewGame = async () => {
         try {
             const res = await fetch(`${API_BASE}/game/`, {
@@ -38,6 +41,7 @@ const GameCurrIn: React.FC = () => {
             }
             const data: GameStatus = await res.json();
             setGameId(data.id);
+            navigate(`/game/${data.id}`, { replace: true });
         } catch (err) {
             console.error("Failed to create new game", err);
         }
