@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	quit bool = false
-	g    *gogame.Game
+	quit           bool = false
+	g              *gogame.Game
+	playerTurnName string
 )
 
 func parseCmd(cmd string) error {
@@ -56,7 +57,7 @@ func execMove(coords [2]string) error {
 		return err
 	}
 
-	err = g.PlayMove(x, y)
+	err = g.PlayMove(playerTurnName, x, y)
 	if err != nil {
 		return err
 	}
@@ -76,7 +77,6 @@ func main() {
 	for !quit {
 		g.Print()
 
-		var playerTurnName string
 		if g.CurrectTurn == gogame.Black {
 			playerTurnName = g.Players[0]
 		} else {

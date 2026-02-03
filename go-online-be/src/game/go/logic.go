@@ -107,7 +107,12 @@ func (g *Game) Leave(player string) error {
 	return nil
 }
 
-func (g *Game) PlayMove(x, y int) error {
+func (g *Game) PlayMove(player string, x, y int) error {
+	if (g.CurrectTurn == Black && player != g.Players[0]) ||
+		(g.CurrectTurn == White && player != g.Players[1]) {
+		return fmt.Errorf("not your turn")
+	}
+
 	if x == PASS {
 		switchTurn(g)
 		return nil
