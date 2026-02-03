@@ -3,6 +3,8 @@ package gogame
 import (
 	"errors"
 	"fmt"
+	"math/rand"
+	"time"
 )
 
 const PASS = -1
@@ -14,6 +16,7 @@ const (
 )
 
 type Game struct {
+	ID          string
 	Players     [2]string
 	CurrectTurn uint8
 
@@ -36,7 +39,7 @@ var (
 	ErrIllegalKoMove        = errors.New("Illegal Ko move (Superko rule)")
 )
 
-func NewGame(boardSize int, players [2]string) (*Game, error) {
+func NewGame(boardSize int, creator string) (*Game, error) {
 	g := new(Game)
 	board, err := NewBoard(boardSize)
 	if err != nil {
@@ -45,7 +48,12 @@ func NewGame(boardSize int, players [2]string) (*Game, error) {
 	g.Board = board
 	g.chains = NewChainsMap(board)
 
-	g.Players = players
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	g.ID = fmt.Sprintf("%08d", rng.Intn(90000000)+10000000)
+	GameInstances[g.ID] = g
+	PlayerToGame[creator] = g
+
+	g.Players[0] = creator
 	g.CurrectTurn = Black
 
 	g.zobrist = NewZobristTable(boardSize)
@@ -61,6 +69,42 @@ func switchTurn(g *Game) {
 	} else {
 		g.CurrectTurn = Black
 	}
+}
+
+func (g *Game) Join(player string) error {
+	if g.Players[1] != "" {
+		return fmt.Errorf("game is full")
+	}
+	g.Players[1] = player
+	PlayerToGame[player] = g
+	return nil
+}
+
+func (g *Game) Leave(player string) error {
+	if g.Players[0] != player && g.Players[1] != player {
+		return nil
+	}
+
+	if g.Players[0] == player {
+		g.Players[0] = ""
+	}
+	if g.Players[1] == player {
+		g.Players[1] = ""
+	}
+
+	delete(PlayerToGame, player)
+
+	if g.Players[0] == "" && g.Players[1] != "" {
+		g.Players[0] = g.Players[1]
+		g.Players[1] = ""
+		PlayerToGame[g.Players[0]] = g
+	}
+
+	if g.Players[0] == "" && g.Players[1] == "" {
+		delete(GameInstances, g.ID)
+	}
+
+	return nil
 }
 
 func (g *Game) PlayMove(x, y int) error {

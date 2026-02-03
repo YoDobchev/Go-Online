@@ -1,6 +1,9 @@
 package gogame
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+)
 
 const (
 	SMALL_BOARD_SIZE  = 9
@@ -101,4 +104,23 @@ func (b *Board) GetSquare(x, y int) (Square, error) {
 	}
 
 	return b.Squares[x][y], nil
+}
+
+func (b *Board) MarshalJSON() ([]byte, error) {
+	grid := make([][]int, b.Size)
+
+	for i := 0; i < b.Size; i++ {
+		grid[i] = make([]int, b.Size)
+		for j := 0; j < b.Size; j++ {
+			grid[i][j] = int(b.Squares[i][j].stone)
+		}
+	}
+
+	return json.Marshal(struct {
+		Size    int     `json:"size"`
+		Squares [][]int `json:"squares"`
+	}{
+		Size:    b.Size,
+		Squares: grid,
+	})
 }

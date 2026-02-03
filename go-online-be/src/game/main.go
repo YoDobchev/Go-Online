@@ -65,10 +65,12 @@ func execMove(coords [2]string) error {
 
 func main() {
 	var err error
-	g, err = gogame.NewGame(9, [2]string{"black", "white"})
+	g, err = gogame.NewGame(9, "black")
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	g.Join("white")
 
 	reader := bufio.NewReader(os.Stdin)
 	for !quit {

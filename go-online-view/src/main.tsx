@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Logout from "./pages/Logout";
+import Game from "./pages/Game";
 
 import "./styles/index.scss";
 
@@ -19,6 +20,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/logout" element={<Logout />} />
+                <Route path="/game/:gameID" element={<Game />} />
             </Routes>
         </AppProviders>
     </StrictMode>
