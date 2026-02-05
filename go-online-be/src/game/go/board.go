@@ -15,6 +15,12 @@ type Square struct {
 	stone uint8
 }
 
+type Stone struct {
+	x     int
+	y     int
+	color uint8
+}
+
 type Board struct {
 	Squares [][]Square
 	Size    int
@@ -104,6 +110,23 @@ func (b *Board) GetSquare(x, y int) (Square, error) {
 	}
 
 	return b.Squares[x][y], nil
+}
+
+func (b *Board) getNeighbors(x, y int) []Stone {
+	neighbors := []Stone{}
+	neighbors = b.appendStone(x-1, y, neighbors)
+	neighbors = b.appendStone(x+1, y, neighbors)
+	neighbors = b.appendStone(x, y-1, neighbors)
+	neighbors = b.appendStone(x, y+1, neighbors)
+	return neighbors
+}
+
+func (b *Board) appendStone(x, y int, stones []Stone) []Stone {
+	square, err := b.GetSquare(x, y)
+	if err == nil {
+		stones = append(stones, Stone{x, y, square.stone})
+	}
+	return stones
 }
 
 func (b *Board) MarshalJSON() ([]byte, error) {

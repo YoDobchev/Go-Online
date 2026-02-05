@@ -2,12 +2,6 @@ package gogame
 
 import "fmt"
 
-type Stone struct {
-	x     int
-	y     int
-	color uint8
-}
-
 type Point struct {
 	x int
 	y int
@@ -36,7 +30,7 @@ func NewChainsMap(board *Board) *ChainsMap {
 
 func (c *ChainsMap) AddStone(x, y int, color uint8) ([]Stone, [][]Stone) {
 	current := Stone{x, y, color}
-	neighbors := c.getNeighbors(x, y)
+	neighbors := c.board.getNeighbors(x, y)
 	sameColor, oppositeColor := groupByColor(neighbors, color)
 	sameColorCapturedChain := []Stone{}
 	otherColorCapturedChains := [][]Stone{}
@@ -116,7 +110,7 @@ func (c *ChainsMap) updateChainDFS(start Stone) []Stone {
 		c.Map[p.x][p.y] = chainIndex
 		chain = append(chain, Stone{p.x, p.y, color})
 
-		for _, n := range c.getNeighbors(p.x, p.y) {
+		for _, n := range c.board.getNeighbors(p.x, p.y) {
 			switch n.color {
 			case Empty:
 				liberties[Point{n.x, n.y}] = struct{}{}
@@ -159,23 +153,6 @@ func groupByColor(neighbors []Stone, color uint8) ([]Stone, []Stone) {
 		}
 	}
 	return sameColor, oppositeColor
-}
-
-func (c *ChainsMap) getNeighbors(x, y int) []Stone {
-	neighbors := []Stone{}
-	neighbors = c.appendStone(x-1, y, neighbors)
-	neighbors = c.appendStone(x+1, y, neighbors)
-	neighbors = c.appendStone(x, y-1, neighbors)
-	neighbors = c.appendStone(x, y+1, neighbors)
-	return neighbors
-}
-
-func (c *ChainsMap) appendStone(x, y int, stones []Stone) []Stone {
-	square, err := c.board.GetSquare(x, y)
-	if err == nil {
-		stones = append(stones, Stone{x, y, square.stone})
-	}
-	return stones
 }
 
 func (c *ChainsMap) PrintGroups() {

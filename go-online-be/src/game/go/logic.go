@@ -19,6 +19,7 @@ type Game struct {
 	ID          string
 	Players     [2]string
 	CurrectTurn uint8
+	passed      bool
 
 	Board *Board
 
@@ -114,6 +115,11 @@ func (g *Game) PlayMove(player string, x, y int) error {
 	}
 
 	if x == PASS {
+		if g.passed {
+			g.endGame()
+			return nil
+		}
+		g.passed = true
 		switchTurn(g)
 		return nil
 	}
@@ -150,6 +156,15 @@ func (g *Game) PlayMove(player string, x, y int) error {
 	g.seen[g.hash] = struct{}{}
 	fmt.Println(len(g.seen))
 	return nil
+}
+
+func (g *Game) endGame() {
+	fmt.Println("Game ended")
+	whitePoints, blackPoints := getPointsFromBoard(g.Board)
+	fmt.Printf("White points: %d", whitePoints)
+	fmt.Println()
+	fmt.Printf("Black points: %d", blackPoints)
+	fmt.Println()
 }
 
 func (g *Game) hashMove(placedStone Stone, otherColorDeletedChains [][]Stone) {
