@@ -176,7 +176,7 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 			_ = conn.WriteJSON(map[string]any{"type": "error", "data": "unknown message type"})
 		}
 
-		if game.GameEnded {
+		if game.GameProgress == gogame.GAME_ENDED {
 			hub.broadcast(map[string]any{
 				"type": "game_ended",
 				"data": map[string]any{

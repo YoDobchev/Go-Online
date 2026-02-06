@@ -13,7 +13,7 @@ import (
 func GamesRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
-	g, _ := gogame.NewGame(19, "admin")
+	g, _ := gogame.NewGame(9, "admin")
 	g.ID = "000"
 	g.Join("dummy")
 	gogame.GameInstances["000"] = g

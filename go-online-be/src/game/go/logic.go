@@ -7,6 +7,11 @@ import (
 	"time"
 )
 
+type Move struct {
+	Color uint8
+	X, Y  int
+}
+
 const PASS = -1
 
 const (
@@ -15,14 +20,23 @@ const (
 	Black
 )
 
+const (
+	GAME_WAITING_FOR_PLAYER = iota
+	GAME_IN_PROGRESS
+	GAME_ENDED
+)
+
 type Game struct {
 	ID          string
 	Players     [2]string
 	CurrectTurn uint8
 	passed      bool
-	GameEnded   bool
-	WhitePoints int
-	BlackPoints int
+
+	GameProgress uint8
+	WhitePoints  int
+	BlackPoints  int
+
+	MoveNum int
 
 	Board *Board
 
@@ -54,7 +68,7 @@ func NewGame(boardSize int, creator string) (*Game, error) {
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	g.ID = fmt.Sprintf("%08d", rng.Intn(90000000)+10000000)
-	g.GameEnded = false
+	g.GameProgress = GAME_WAITING_FOR_PLAYER
 	GameInstances[g.ID] = g
 	PlayerToGame[creator] = g
 
@@ -113,57 +127,90 @@ func (g *Game) Leave(player string) error {
 }
 
 func (g *Game) PlayMove(player string, x, y int) error {
+	if g.GameProgress != GAME_IN_PROGRESS {
+		return fmt.Errorf("game has ended")
+	}
+
 	if (g.CurrectTurn == Black && player != g.Players[0]) ||
 		(g.CurrectTurn == White && player != g.Players[1]) {
 		return fmt.Errorf("not your turn")
 	}
 
-	if x == PASS {
+	m := Move{
+		Color: g.CurrectTurn,
+		X:     x,
+		Y:     y,
+	}
+
+	err := g.ApplyMove(m)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (g *Game) ApplyMove(m Move) error {
+	if g.GameProgress != GAME_IN_PROGRESS {
+		return fmt.Errorf("game has ended")
+	}
+
+	if m.Color != g.CurrectTurn {
+		return fmt.Errorf("wrong color for current turn")
+	}
+
+	if m.X == PASS {
 		if g.passed {
 			g.endGame()
 			return nil
 		}
+
 		g.passed = true
+
+		g.hash = g.zobrist.ToggleSide(g.hash)
+
 		switchTurn(g)
 		return nil
 	}
 
+	g.passed = false
+
 	snapshot := g.chains.Snapshot()
-	err := g.Board.AddStone(x, y, g.CurrectTurn)
-	if err != nil {
+
+	if err := g.Board.AddStone(m.X, m.Y, m.Color); err != nil {
 		return err
 	}
-	sameColorCapturedChain, otherColorCapturedChains := g.chains.AddStone(x, y, g.CurrectTurn)
+
+	sameColorCapturedChain, otherColorCapturedChains := g.chains.AddStone(m.X, m.Y, m.Color)
 
 	if len(sameColorCapturedChain) > 0 && len(otherColorCapturedChains) == 0 {
-		//Self capture
 		g.chains.Restore(snapshot)
-		g.Board.RemoveStone(x, y)
+		g.Board.RemoveStone(m.X, m.Y)
 		return ErrIllegalSelfCapture
 	}
+
 	oldHash := g.hash
-	g.hashMove(Stone{x, y, g.CurrectTurn}, otherColorCapturedChains)
+	g.hashMove(Stone{m.X, m.Y, m.Color}, otherColorCapturedChains)
 	g.hash = g.zobrist.ToggleSide(g.hash)
-	_, found := g.seen[g.hash]
-	if found {
-		//Ko move
+
+	if _, found := g.seen[g.hash]; found {
 		g.hash = oldHash
 		g.chains.Restore(snapshot)
-		g.Board.RemoveStone(x, y)
+		g.Board.RemoveStone(m.X, m.Y)
 		return ErrIllegalKoMove
-	} else {
-		//Valid move
-		g.Board.RemoveChains(otherColorCapturedChains)
-		g.chains.applyCapture(sameColorCapturedChain, otherColorCapturedChains)
 	}
+
+	g.Board.RemoveChains(otherColorCapturedChains)
+	g.chains.applyCapture(sameColorCapturedChain, otherColorCapturedChains)
+
 	switchTurn(g)
 	g.seen[g.hash] = struct{}{}
-	fmt.Println(len(g.seen))
+
 	return nil
 }
 
 func (g *Game) endGame() {
-	g.GameEnded = true
+	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
 }
 

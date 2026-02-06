@@ -147,3 +147,24 @@ func (b *Board) MarshalJSON() ([]byte, error) {
 		Squares: grid,
 	})
 }
+
+func (b *Board) UnmarshalJSON(data []byte) error {
+	var aux struct {
+		Size    int     `json:"size"`
+		Squares [][]int `json:"squares"`
+	}
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+	nb, err := NewBoard(aux.Size)
+	if err != nil {
+		return err
+	}
+	for x := 0; x < aux.Size; x++ {
+		for y := 0; y < aux.Size; y++ {
+			nb.Squares[x][y].stone = uint8(aux.Squares[x][y])
+		}
+	}
+	*b = *nb
+	return nil
+}
