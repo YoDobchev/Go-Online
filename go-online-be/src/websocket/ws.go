@@ -172,9 +172,26 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 					"board":   game.Board,
 				},
 			})
-
 		default:
 			_ = conn.WriteJSON(map[string]any{"type": "error", "data": "unknown message type"})
+		}
+
+		if game.GameEnded {
+			hub.broadcast(map[string]any{
+				"type": "game_ended",
+				"data": map[string]any{
+					"white_points": game.WhitePoints,
+					"black_points": game.BlackPoints,
+				},
+			})
+
+			hub.mu.Lock()
+			for conn := range hub.clients {
+				conn.Close()
+			}
+			hub.clients = make(map[*websocket.Conn]*client)
+			hub.mu.Unlock()
+			break
 		}
 	}
 }

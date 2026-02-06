@@ -7,17 +7,11 @@ const GameList: React.FC = () => {
             // const res = fetch(`${API_BASE}/gameList`, {
             //     credentials: "include",
             // });
-
-        }
+        };
 
         fetchGames();
     });
-    return (
-        <div>
-
-
-        </div>
-    );
+    return <div></div>;
 };
 
 export default GameList;

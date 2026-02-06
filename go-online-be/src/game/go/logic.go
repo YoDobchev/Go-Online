@@ -20,6 +20,9 @@ type Game struct {
 	Players     [2]string
 	CurrectTurn uint8
 	passed      bool
+	GameEnded   bool
+	WhitePoints int
+	BlackPoints int
 
 	Board *Board
 
@@ -51,6 +54,7 @@ func NewGame(boardSize int, creator string) (*Game, error) {
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	g.ID = fmt.Sprintf("%08d", rng.Intn(90000000)+10000000)
+	g.GameEnded = false
 	GameInstances[g.ID] = g
 	PlayerToGame[creator] = g
 
@@ -159,12 +163,8 @@ func (g *Game) PlayMove(player string, x, y int) error {
 }
 
 func (g *Game) endGame() {
-	fmt.Println("Game ended")
-	whitePoints, blackPoints := getPointsFromBoard(g.Board)
-	fmt.Printf("White points: %d", whitePoints)
-	fmt.Println()
-	fmt.Printf("Black points: %d", blackPoints)
-	fmt.Println()
+	g.GameEnded = true
+	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
 }
 
 func (g *Game) hashMove(placedStone Stone, otherColorDeletedChains [][]Stone) {

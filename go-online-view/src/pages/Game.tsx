@@ -4,7 +4,6 @@ import { API_BASE } from "../config";
 import GoBoardSVG from "../components/GoBoardSVG";
 import type { Board } from "../components/GoBoardSVG";
 
-
 interface GameInfo {
     players: [string, string];
     turn: number;
@@ -15,6 +14,10 @@ type ServerMsg =
     | { type: "hello"; data: { role: "player" | "spectator"; user: string } }
     | { type: "game_snapshot"; data: GameInfo }
     | { type: "move_played"; data: { by: string; row: number; col: number } }
+    | {
+          type: "game_ended";
+          data: { white_points: number; black_points: number };
+      }
     | { type: "error"; data: string };
 
 const Game: React.FC = () => {
@@ -43,6 +46,8 @@ const Game: React.FC = () => {
                 setRole(msg.data.role);
             } else if (msg.type === "game_snapshot") {
                 setGameInfo(msg.data);
+            } else if (msg.type === "game_ended") {
+                console.log("gameended");
             } else if (msg.type === "error") {
                 console.error("Server error:", msg.data);
             }
@@ -73,6 +78,18 @@ const Game: React.FC = () => {
         );
     };
 
+    const sendPass = () => {
+        const ws = wsRef.current;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+        ws.send(
+            JSON.stringify({
+                type: "play_move",
+                data: { row: -1, col: -1 },
+            }),
+        );
+    };
+
     if (!gameInfo) return <div>Loading...</div>;
 
     return (
@@ -90,6 +107,7 @@ const Game: React.FC = () => {
                 interactive={role === "player"}
                 onPlay={(r, c) => sendMove(r, c)}
             />
+            <button onClick={sendPass}>pass</button>
         </div>
     );
 };
