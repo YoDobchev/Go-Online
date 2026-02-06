@@ -2,7 +2,6 @@ package ws
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -87,7 +86,6 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
-	fmt.Println("2")
 
 	if game.Players[0] == "" || game.Players[1] == "" {
 		http.Error(w, "game not started yet", http.StatusForbidden)
@@ -122,11 +120,12 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 	})
 
 	_ = conn.WriteJSON(map[string]any{
-		"type": "game_snapshot",
+		"type": "sync",
 		"data": map[string]any{
 			"players": game.Players,
 			"turn":    game.CurrectTurn,
 			"board":   game.Board,
+			"moveNum": game.MoveNum,
 		},
 	})
 
@@ -158,20 +157,13 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			// hub.broadcast(map[string]any{
-			// 	"type": "move_played",
-			// 	"data": map[string]any{
-			// 		"by":  username,
-			// 		"row": p.Row,
-			// 		"col": p.Col,
-			// 	},
-			// })
 			hub.broadcast(map[string]any{
-				"type": "game_snapshot",
+				"type": "sync",
 				"data": map[string]any{
 					"players": game.Players,
 					"turn":    game.CurrectTurn,
 					"board":   game.Board,
+					"moveNum": game.MoveNum,
 				},
 			})
 		default:
