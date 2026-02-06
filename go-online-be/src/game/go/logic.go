@@ -79,6 +79,9 @@ func NewGame(boardSize int, creator string) (*Game, error) {
 	g.hash = g.zobrist.HashBoard(g.Board.Squares, true)
 	g.seen = make(map[uint64]struct{})
 
+	saveGameToDB(g)
+	saveSnapshotIfNeededToDB(g)
+
 	return g, nil
 }
 
@@ -96,6 +99,7 @@ func (g *Game) Join(player string) error {
 	}
 	g.Players[1] = player
 	PlayerToGame[player] = g
+	saveGameToDB(g)
 	return nil
 }
 
@@ -122,6 +126,8 @@ func (g *Game) Leave(player string) error {
 	if g.Players[0] == "" && g.Players[1] == "" {
 		delete(GameInstances, g.ID)
 	}
+
+	saveGameToDB(g)
 
 	return nil
 }
@@ -212,7 +218,6 @@ func (g *Game) ApplyMove(m Move) error {
 }
 
 func (g *Game) endGame() {
-	fmt.Println("aaaaaaa")
 	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
 }

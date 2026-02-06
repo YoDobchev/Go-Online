@@ -6,6 +6,10 @@ import (
 	"github.com/YoDobchev/Go-Online/src/database"
 )
 
+const (
+	SnapshotInterval = 3
+)
+
 func LoadGamesFromDB() {
 	var dbGames []database.Game
 	if err := database.DB.Find(&dbGames).Error; err != nil {
@@ -148,7 +152,7 @@ func saveGameToDB(g *Game) error {
 }
 
 func saveSnapshotIfNeededToDB(g *Game) error {
-	if g.MoveNum%3 != 0 && g.GameProgress != GAME_ENDED {
+	if g.MoveNum%SnapshotInterval != 0 && g.GameProgress != GAME_ENDED {
 		return nil
 	}
 

@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -86,6 +87,7 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
+	fmt.Println("2")
 
 	if game.Players[0] == "" || game.Players[1] == "" {
 		http.Error(w, "game not started yet", http.StatusForbidden)
