@@ -21,7 +21,7 @@ func LoadGamesFromDB() {
 		playerBlack = *dbGame.PlayerBlack
 		playerWhite = *dbGame.PlayerWhite
 
-		board, err := getBoardStateOnMoveNoFromDB(dbGame.ID, dbGame.MoveNo)
+		board, err := GetBoardStateOnMoveNoFromDB(dbGame.ID, dbGame.MoveNo)
 		if err != nil {
 			panic(err)
 		}
@@ -73,7 +73,7 @@ func constructGameFromSnapshot(snapshot database.GameSnapshot) (*Game, error) {
 	return g, nil
 }
 
-func getBoardStateOnMoveNoFromDB(gameID string, moveNo int) (*Board, error) {
+func GetBoardStateOnMoveNoFromDB(gameID string, moveNo int) (*Board, error) {
 	var snap database.GameSnapshot
 
 	err := database.DB.

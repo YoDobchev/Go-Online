@@ -3,6 +3,7 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/middleware"
@@ -14,6 +15,7 @@ func GamesRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Get("/{id}/ws", ws.WsGameHandler)
+	r.Get("/{id}/state", getGameStateHandler)
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
@@ -62,4 +64,33 @@ func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{
 		"id": newGame.ID,
 	})
+}
+
+func getGameStateHandler(w http.ResponseWriter, r *http.Request) {
+	gameID := chi.URLParam(r, "id")
+	game, exists := gogame.GameInstances[gameID]
+	if !exists {
+		http.Error(w, "game not found", http.StatusNotFound)
+		return
+	}
+	moveNum := r.URL.Query().Get("moveNum")
+	if moveNum == "" {
+		http.Error(w, "enter a valid move number", http.StatusInternalServerError)
+		return
+	}
+
+	moveNumi, err := strconv.Atoi(moveNum)
+	if err != nil {
+		http.Error(w, "enter a valid move number", http.StatusInternalServerError)
+		return
+	}
+
+	board, err := gogame.GetBoardStateOnMoveNoFromDB(game.ID, (moveNumi))
+	if err != nil {
+		http.Error(w, "could not get board state", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(board)
 }
