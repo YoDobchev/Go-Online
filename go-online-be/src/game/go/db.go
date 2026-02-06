@@ -1,14 +1,119 @@
 package gogame
 
-import "github.com/YoDobchev/Go-Online/src/database"
+import (
+	"time"
+
+	"github.com/YoDobchev/Go-Online/src/database"
+)
+
+func LoadGamesFromDB() {
+	var dbGames []database.Game
+	if err := database.DB.Find(&dbGames).Error; err != nil {
+		panic(err)
+	}
+
+	for _, dbGame := range dbGames {
+		var playerBlack, playerWhite string
+		playerBlack = *dbGame.PlayerBlack
+		playerWhite = *dbGame.PlayerWhite
+
+		board, err := getBoardStateOnMoveNoFromDB(dbGame.ID, dbGame.MoveNo)
+		if err != nil {
+			panic(err)
+		}
+		g := &Game{
+			ID:           dbGame.ID,
+			Players:      [2]string{playerBlack, playerWhite},
+			Board:        board,
+			CurrectTurn:  dbGame.CurrentTurn,
+			passed:       dbGame.Passed,
+			GameProgress: dbGame.GameProgress,
+			WhitePoints:  dbGame.WhitePoints,
+			BlackPoints:  dbGame.BlackPoints,
+			MoveNum:      dbGame.MoveNo,
+			hash:         uint64(dbGame.CurrentHash),
+			zobrist:      NewZobristTable(board.Size),
+			seen:         make(map[uint64]struct{}),
+		}
+
+		GameInstances[g.ID] = g
+		if g.GameProgress != GAME_ENDED {
+			if g.Players[0] != "" {
+				PlayerToGame[g.Players[0]] = g
+			}
+			if g.Players[1] != "" {
+				PlayerToGame[g.Players[1]] = g
+			}
+		}
+	}
+}
+
+func constructGameFromSnapshot(snapshot database.GameSnapshot) (*Game, error) {
+	board := &Board{}
+	if err := board.UnmarshalJSON(snapshot.BoardJSON); err != nil {
+		return nil, err
+	}
+
+	g := &Game{
+		ID:          snapshot.GameID,
+		Board:       board,
+		CurrectTurn: snapshot.CurrentTurn,
+		passed:      snapshot.Passed,
+		hash:        uint64(snapshot.Hash),
+		chains:      NewChainsMap(board),
+		zobrist:     NewZobristTable(board.Size),
+		seen:        make(map[uint64]struct{}),
+	}
+
+	return g, nil
+}
+
+func getBoardStateOnMoveNoFromDB(gameID string, moveNo int) (*Board, error) {
+	var snap database.GameSnapshot
+
+	err := database.DB.
+		Where("game_id = ? AND move_no <= ?", gameID, moveNo).
+		Order("move_no DESC").
+		First(&snap).Error
+	if err != nil {
+		return nil, err
+	}
+
+	g, err := constructGameFromSnapshot(snap)
+	if err != nil {
+		return nil, err
+	}
+
+	var moves []database.GameMove
+	err = database.DB.
+		Where("game_id = ? AND move_no > ? AND move_no <= ?", gameID, snap.MoveNo, moveNo).
+		Order("move_no ASC").
+		Find(&moves).Error
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mv := range moves {
+		if err := g.ApplyMove(Move{
+			Color: mv.Color,
+			X:     mv.X,
+			Y:     mv.Y,
+		}); err != nil {
+			return nil, err
+		}
+	}
+
+	return g.Board, nil
+}
 
 func saveMoveToDB(g *Game, m Move) error {
 	move := database.GameMove{
-		GameID: g.ID,
-		MoveNo: g.MoveNum,
-		Color:  m.Color,
-		X:      m.X,
-		Y:      m.Y,
+		GameID:        g.ID,
+		MoveNo:        g.MoveNum,
+		Color:         m.Color,
+		X:             m.X,
+		Y:             m.Y,
+		ResultingHash: int64(g.hash),
 	}
 
 	return database.DB.Create(&move).Error
@@ -33,7 +138,35 @@ func saveGameToDB(g *Game) error {
 		GameProgress: g.GameProgress,
 		WhitePoints:  g.WhitePoints,
 		BlackPoints:  g.BlackPoints,
+		MoveNo:       g.MoveNum,
+		CurrentHash:  int64(g.hash),
+		UpdatedAt:    time.Now(),
 	}
 
 	return database.DB.Save(&dbGame).Error
+}
+
+func saveSnapshotIfNeededToDB(g *Game) error {
+	if g.MoveNum%3 != 0 && g.GameProgress != GAME_ENDED {
+		return nil
+	}
+
+	boardJSON, err := g.Board.MarshalJSON()
+	if err != nil {
+		return err
+	}
+
+	dbSnapshot := database.GameSnapshot{
+		GameID: g.ID,
+		MoveNo: g.MoveNum,
+
+		BoardJSON:   boardJSON,
+		CurrentTurn: g.CurrectTurn,
+		Passed:      g.passed,
+		Hash:        int64(g.hash),
+
+		CreatedAt: time.Now(),
+	}
+
+	return database.DB.Save(&dbSnapshot).Error
 }

@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/YoDobchev/Go-Online/src/database"
+	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/routes"
 	"github.com/joho/godotenv"
 )
@@ -17,12 +18,11 @@ func main() {
 
 	database.Connect()
 
+	gogame.LoadGamesFromDB()
+
 	r := routes.New()
 
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
 
 	log.Printf("Listening on :%v...", port)
 	http.ListenAndServe(":"+port, r)

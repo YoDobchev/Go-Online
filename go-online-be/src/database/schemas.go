@@ -26,7 +26,6 @@ type Session struct {
 type Game struct {
 	ID        string `gorm:"primaryKey;type:text"`
 	BoardSize int    `gorm:"not null"`
-	Rules     string `gorm:"not null;default:'japanese'"`
 
 	PlayerBlack *string `gorm:"type:text"`
 	PlayerWhite *string `gorm:"type:text"`
@@ -61,7 +60,7 @@ type GameSnapshot struct {
 	MoveNo int    `gorm:"primaryKey;not null"`
 
 	BoardJSON   datatypes.JSON `gorm:"type:jsonb;not null"`
-	CurrentTurn int16          `gorm:"not null"`
+	CurrentTurn uint8          `gorm:"not null"`
 	Passed      bool           `gorm:"not null"`
 	Hash        int64          `gorm:"not null"`
 

@@ -127,7 +127,6 @@ func (g *Game) Leave(player string) error {
 }
 
 func (g *Game) PlayMove(player string, x, y int) error {
-
 	if (g.CurrectTurn == Black && player != g.Players[0]) ||
 		(g.CurrectTurn == White && player != g.Players[1]) {
 		return fmt.Errorf("not your turn")
@@ -143,6 +142,16 @@ func (g *Game) PlayMove(player string, x, y int) error {
 	if err != nil {
 		return err
 	}
+
+	if g.GameProgress == GAME_WAITING_FOR_PLAYER {
+		g.GameProgress = GAME_IN_PROGRESS
+	}
+
+	saveGameToDB(g)
+	saveMoveToDB(g, m)
+	saveSnapshotIfNeededToDB(g)
+
+	g.MoveNum++
 
 	return nil
 }
