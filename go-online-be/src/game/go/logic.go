@@ -127,9 +127,6 @@ func (g *Game) Leave(player string) error {
 }
 
 func (g *Game) PlayMove(player string, x, y int) error {
-	if g.GameProgress != GAME_IN_PROGRESS {
-		return fmt.Errorf("game has ended")
-	}
 
 	if (g.CurrectTurn == Black && player != g.Players[0]) ||
 		(g.CurrectTurn == White && player != g.Players[1]) {
@@ -151,10 +148,6 @@ func (g *Game) PlayMove(player string, x, y int) error {
 }
 
 func (g *Game) ApplyMove(m Move) error {
-	if g.GameProgress != GAME_IN_PROGRESS {
-		return fmt.Errorf("game has ended")
-	}
-
 	if m.Color != g.CurrectTurn {
 		return fmt.Errorf("wrong color for current turn")
 	}
@@ -210,6 +203,7 @@ func (g *Game) ApplyMove(m Move) error {
 }
 
 func (g *Game) endGame() {
+	fmt.Println("aaaaaaa")
 	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
 }
