@@ -17,20 +17,29 @@ interface Status {
     seat: "black" | "white" | "spectator";
 }
 
+interface ClockSnapshot {
+    player: number; // 1 = black, 2 = white
+    main_remaining_ms: number;
+    byo_remaining_ms: number;
+    byo_periods_left: number;
+    server_time: number;
+}
+
 type ServerMsg =
     | {
-          type: "hello";
-          data: {
-              role: "player" | "spectator";
-              seat: "black" | "white" | "spectator";
-          };
-      }
+        type: "hello";
+        data: {
+            role: "player" | "spectator";
+            seat: "black" | "white" | "spectator";
+        };
+    }
     | { type: "sync"; data: GameInfo }
     | {
-          type: "game_ended";
-          data: { white_points: number; black_points: number };
-      }
+        type: "game_ended";
+        data: { white_points: number; black_points: number };
+    }
     | { type: "error"; data: string }
+    | { type: "clock_update"; data: ClockSnapshot }
     | { type: "timeout"; data: { loser: number } };
 
 const Game: React.FC = () => {
@@ -40,6 +49,11 @@ const Game: React.FC = () => {
 
     const [viewMoveNum, setViewMoveNum] = useState<number | null>(null);
     const [viewBoard, setViewBoard] = useState<Board | null>(null);
+
+    const [clocks, setClocks] = useState<Record<number, ClockSnapshot>>({});
+    const [clockReceivedAt, setClockReceivedAt] = useState<number>(Date.now());
+
+
 
     const wsRef = useRef<WebSocket | null>(null);
 
@@ -63,9 +77,31 @@ const Game: React.FC = () => {
                 setStatus(msg.data);
             } else if (msg.type === "sync") {
                 setGameInfo(msg.data);
+                setClocks((prev) => ({
+                    1: prev[1] ?? {
+                        player: 1,
+                        main_remaining_ms: 0,
+                        byo_remaining_ms: 0,
+                        byo_periods_left: 0,
+                        server_time: Date.now(),
+                    },
+                    2: prev[2] ?? {
+                        player: 2,
+                        main_remaining_ms: 0,
+                        byo_remaining_ms: 0,
+                        byo_periods_left: 0,
+                        server_time: Date.now(),
+                    },
+                }));
             } else if (msg.type === "game_ended") {
                 console.log(msg.type, msg.data);
                 console.log("gameended");
+            } else if (msg.type === "clock_update") {
+                setClocks((prev) => ({
+                    ...prev,
+                    [msg.data.player]: msg.data,
+                }));
+                setClockReceivedAt(Date.now());
             } else if (msg.type === "timeout") {
                 console.log(`${msg.data.loser} ran out of time`);
             } else if (msg.type === "error") {
@@ -85,6 +121,13 @@ const Game: React.FC = () => {
             ws.close();
         };
     }, [gameID]);
+
+    useEffect(() => {
+        const id = setInterval(() => {
+            setClocks((c) => ({ ...c }));
+        }, 250);
+        return () => clearInterval(id);
+    }, []);
 
     const sendMove = (row: number, col: number) => {
         const ws = wsRef.current;
@@ -130,6 +173,32 @@ const Game: React.FC = () => {
         }
     };
 
+    const getDisplayedTime = (player: number) => {
+        const clock = clocks[player];
+        if (!clock) return null;
+
+        let remaining =
+            clock.main_remaining_ms > 0
+                ? clock.main_remaining_ms
+                : clock.byo_remaining_ms;
+
+        if (gameInfo?.turn === player) {
+            remaining -= Date.now() - clockReceivedAt;
+        }
+
+        return Math.max(0, remaining);
+    };
+
+
+    const formatTime = (ms: number) => {
+        const totalSeconds = Math.ceil(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    };
+
+
+
     const backToLive = () => {
         setViewMoveNum(null);
         setViewBoard(null);
@@ -145,6 +214,41 @@ const Game: React.FC = () => {
     const isLobbyWaiting = status.role === "player" && !opponentJoined;
 
     const canPlay = status.role === "player" && isLive && opponentJoined;
+
+    const PlayerClock: React.FC<{
+        label: string;
+        player: number;
+        active: boolean;
+    }> = ({ label, player, active }) => {
+        const remaining = getDisplayedTime(player);
+        const clock = clocks[player];
+
+        if (!clock) return null;
+
+        return (
+            <div
+                style={{
+                    padding: "6px 10px",
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    background: active ? "#eef6ff" : "#fafafa",
+                    marginBottom: 6,
+                }}
+            >
+                <div style={{ fontWeight: 600 }}>{label}</div>
+                <div style={{ fontSize: 18 }}>
+                    {remaining !== null ? formatTime(remaining) : "--:--"}
+                </div>
+
+                {clock.main_remaining_ms <= 0 && (
+                    <div style={{ fontSize: 12, color: "#555" }}>
+                        Byo-yomi: {clock.byo_periods_left} ×{" "}
+                        {formatTime(clock.byo_remaining_ms)}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     return (
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -164,7 +268,7 @@ const Game: React.FC = () => {
                             borderRadius: 6,
                         }}
                     >
-                        <div style={{ fontWeight: 600, color: "black"}}>
+                        <div style={{ fontWeight: 600, color: "black" }}>
                             Waiting for an opponent…
                         </div>
                         <div style={{ fontSize: 14 }}>
@@ -190,6 +294,19 @@ const Game: React.FC = () => {
                     </div>
                 )}
 
+                <div style={{ marginBottom: 12 }}>
+                    <PlayerClock
+                        label="⚫ Black"
+                        player={2}
+                        active={gameInfo.turn === 2}
+                    />
+                    <PlayerClock
+                        label="⚪ White"
+                        player={1}
+                        active={gameInfo.turn === 1}
+                    />
+                </div>
+
                 <GoBoardSVG
                     board={boardToShow}
                     interactive={canPlay}
@@ -198,7 +315,7 @@ const Game: React.FC = () => {
 
                 <button
                     onClick={sendPass}
-                    disabled={!canPlay} 
+                    disabled={!canPlay}
                     title={
                         isLobbyWaiting
                             ? "Waiting for opponent to join"

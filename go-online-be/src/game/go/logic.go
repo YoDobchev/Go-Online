@@ -152,38 +152,61 @@ func (g *Game) Join(player string) error {
 
 func (g *Game) startClock() {
 	go func() {
-		currentTurn := Black
-		g.Clock = clock.NewClock(10 * time.Second)
-		g.Clock.Start(currentTurn)
-		ticker := time.NewTicker(100 * time.Millisecond)
-		defer ticker.Stop()
+		timeFormat := clock.TimeFormat{
+			MainTime:       30 * time.Second,
+			ByoYomi:        0,
+			ByoYomiPeriods: 0,
+		}
+
+		g.Clock = clock.NewClock(timeFormat)
+		g.Clock.Start(Black)
+		turn := Black
+
+		tick := time.NewTicker(100 * time.Millisecond)
+		update := time.NewTicker(1 * time.Second)
+		defer tick.Stop()
+		defer update.Stop()
+		g.Events <- g.Clock.GetClockUpdate(Black)
+		g.Events <- g.Clock.GetClockUpdate(White)
 		for {
 			select {
-			case <-ticker.C:
-				if g.Clock.OutOfTime(currentTurn) {
-					fmt.Printf("Player %d ran out of time\n", currentTurn)
+			case <-update.C:
+				g.Events <- g.Clock.GetClockUpdate(turn)
+			case <-tick.C:
+				g.mu.Lock()
+				turn = g.CurrectTurn
+				ended := g.GameProgress == GAME_ENDED
+				g.mu.Unlock()
+
+				if ended {
+					return
+				}
+
+				if g.Clock.OutOfTime(turn) {
 					g.mu.Lock()
 					g.EndedByTimeout = true
 					g.GameProgress = GAME_ENDED
 					g.mu.Unlock()
+
 					g.Events <- map[string]any{
 						"type": "timeout",
 						"data": map[string]any{
-							"loser": currentTurn,
+							"loser": turn,
 						},
 					}
 					return
 				}
+
 			case <-g.MovePlayed:
-				if g.GameProgress == GAME_ENDED {
+				g.mu.Lock()
+				turn = g.CurrectTurn
+				ended := g.GameProgress == GAME_ENDED
+				g.mu.Unlock()
+
+				if ended {
 					return
 				}
-				g.Clock.Switch(g.CurrectTurn)
-				if currentTurn == Black {
-					currentTurn = White
-				} else {
-					currentTurn = Black
-				}
+				g.Clock.Switch(turn)
 			}
 		}
 	}()
