@@ -3,8 +3,7 @@ import { API_BASE } from "../config";
 import "../styles/gamelist.scss";
 import { useNavigate } from "react-router-dom";
 import BottomCenMsg from "./BottomCenMsg";
-
-type GameStatus = { id: number | string };
+import CreateGame from "./CreateGame";
 
 type Game = {
     id: number | string;
@@ -139,64 +138,12 @@ const GameList: React.FC = () => {
     const navigate = useNavigate();
 
     const [createOpen, setCreateOpen] = useState(false);
-    const [playAs, setPlayAs] = useState(0);
-    const [createSize, setCreateSize] = useState<SizeFilter>("19");
-    const [createRanked, setCreateRanked] = useState(true);
-    const [creating, setCreating] = useState(false);
-
-    useEffect(() => {
-        if (!createOpen) return;
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") setCreateOpen(false);
-        };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
-    }, [createOpen]);
-
     const [show, setShow] = useState(false);
     const [msg, setMsg] = useState("");
 
     const triggerErrMsg = (text: string) => {
         setMsg(text);
         setShow(true);
-    };
-    const createNewGame = async () => {
-        try {
-            setCreating(true);
-
-            const payload = {
-                playAs: playAs,
-                boardSize: Number(createSize),
-                ranked: createRanked,
-            };
-
-            const res = await fetch(`${API_BASE}/game/`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!res.ok) {
-                const errorText = await res.text();
-
-                if (errorText.includes("user already in a game")) {
-                    triggerErrMsg("You are already in a game!");
-                }
-
-                throw new Error(errorText || "Failed to create new game");
-            }
-
-            const data: GameStatus = await res.json();
-
-            setCreateOpen(false);
-
-            navigate(`/game/${data.id}`);
-        } catch (err) {
-            console.error("Failed to create new game", err);
-        } finally {
-            setCreating(false);
-        }
     };
 
     return (
@@ -332,85 +279,12 @@ const GameList: React.FC = () => {
                 </div>
             </div>
 
-            {createOpen && (
-                <div
-                    className="modal-backdrop"
-                    onMouseDown={() => !creating && setCreateOpen(false)}
-                    role="presentation"
-                >
-                    <div
-                        className="modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-label="Create game"
-                        onMouseDown={(e) => e.stopPropagation()}
-                    >
-                        <div className="modal-title">Create game</div>
-
-                        <div className="modal-row">
-                            <label>Play as</label>
-                            <select
-                                value={playAs}
-                                onChange={(e) =>
-                                    setPlayAs(parseInt(e.target.value))
-                                }
-                                disabled={creating}
-                            >
-                                <option value="0">Black</option>
-                                <option value="1">White</option>
-                                <option value="2">Random</option>
-                            </select>
-                        </div>
-
-                        <div className="modal-row">
-                            <label>Board size</label>
-                            <select
-                                value={createSize}
-                                onChange={(e) =>
-                                    setCreateSize(parseSize(e.target.value))
-                                }
-                                disabled={creating}
-                            >
-                                <option value="9">9x9</option>
-                                <option value="13">13x13</option>
-                                <option value="19">19x19</option>
-                            </select>
-                        </div>
-
-                        <div className="modal-row">
-                            <label>Type</label>
-                            <select
-                                value={createRanked ? "ranked" : "unrakned"}
-                                onChange={(e) =>
-                                    setCreateRanked(e.target.value === "ranked")
-                                }
-                                disabled={creating}
-                            >
-                                <option value="ranked">Ranked</option>
-                                <option value="unranked">Unranked</option>
-                            </select>
-                        </div>
-
-                        <div className="modal-actions">
-                            <button
-                                type="button"
-                                onClick={() => setCreateOpen(false)}
-                                disabled={creating}
-                            >
-                                Cancel
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={createNewGame}
-                                disabled={creating}
-                            >
-                                {creating ? "Creating…" : "Create"}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <CreateGame
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                onCreated={(id) => navigate(`/game/${id}`)}
+                onError={triggerErrMsg}
+            />
 
             <BottomCenMsg
                 visible={show}
