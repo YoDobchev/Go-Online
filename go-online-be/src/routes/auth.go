@@ -87,8 +87,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Secure:   secure,
 	})
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, http.StatusOK, map[string]string{
 		"message": "login successful",
 	})
 }
@@ -130,9 +129,7 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := map[string]string{"message": "register successful"}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	writeJSON(w, http.StatusOK, map[string]string{"message": "register successful"})
 }
 
 func meHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,8 +144,7 @@ func meHandler(w http.ResponseWriter, r *http.Request) {
 		"username": user.Username,
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func logoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -176,8 +172,7 @@ func logoutHandler(w http.ResponseWriter, r *http.Request) {
 		Secure:   os.Getenv("ENV") == "prod",
 	})
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, http.StatusOK, map[string]string{
 		"message": "logout successful",
 	})
 }

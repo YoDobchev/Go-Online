@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -35,13 +34,12 @@ func getIfInGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	game, inGame := gogame.PlayerToGame[user.Username]
-	w.Header().Set("Content-Type", "application/json")
 	if inGame {
-		json.NewEncoder(w).Encode(map[string]string{
+		writeJSON(w, http.StatusOK, map[string]string{
 			"id": game.ID,
 		})
 	} else {
-		json.NewEncoder(w).Encode(map[string]string{
+		writeJSON(w, http.StatusOK, map[string]string{
 			"id": "",
 		})
 	}
@@ -60,8 +58,7 @@ func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
+	writeJSON(w, http.StatusOK, map[string]string{
 		"id": newGame.ID,
 	})
 }
@@ -91,6 +88,5 @@ func getGameStateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(board)
+	writeJSON(w, http.StatusOK, board)
 }

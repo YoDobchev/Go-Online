@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"encoding/json"
+	"net/http"
 	"os"
 
 	"github.com/go-chi/chi/v5"
@@ -26,6 +28,13 @@ func New() *chi.Mux {
 
 	r.Mount("/api/auth", AuthRoutes())
 	r.Mount("/api/game", GamesRoutes())
+	r.Mount("/api/search", SearchRoutes())
 
 	return r
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(v)
 }
