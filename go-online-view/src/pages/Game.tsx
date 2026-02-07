@@ -36,7 +36,7 @@ type ServerMsg =
     | { type: "sync"; data: GameInfo }
     | {
         type: "game_ended";
-        data: { white_points: number; black_points: number };
+        data: { white_points: number; black_points: number; winner: number };
     }
     | { type: "error"; data: string }
     | { type: "clock_update"; data: ClockSnapshot }

@@ -220,6 +220,7 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 					"data": map[string]any{
 						"white_points": game.WhitePoints,
 						"black_points": game.BlackPoints,
+						"winner":       game.WinnerIndex,
 					},
 				})
 			}

@@ -40,6 +40,7 @@ type Game struct {
 	ID          string
 	Ranked      bool
 	Players     [2]string
+	WinnerIndex uint8
 	CurrectTurn uint8
 	passed      bool
 
@@ -186,6 +187,7 @@ func (g *Game) startClock() {
 					g.mu.Lock()
 					g.EndedByTimeout = true
 					g.GameProgress = GAME_ENDED
+					g.WinnerIndex = 1 - turn
 					g.mu.Unlock()
 
 					g.Events <- map[string]any{
@@ -326,6 +328,11 @@ func (g *Game) ApplyMove(m Move) error {
 func (g *Game) endGame() {
 	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
+	if g.WhitePoints > g.BlackPoints {
+		g.WinnerIndex = 1
+	} else if g.BlackPoints > g.WhitePoints {
+		g.WinnerIndex = 0
+	}
 }
 
 func (g *Game) hashMove(placedStone Stone, otherColorDeletedChains [][]Stone) {
