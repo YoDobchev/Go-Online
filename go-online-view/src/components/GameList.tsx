@@ -99,7 +99,7 @@ const GameList: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await fetch(`${API_BASE}/gamelist?${queryString}`, {
+                const res = await fetch(`${API_BASE}/search/games?${queryString}`, {
                     credentials: "include",
                     signal: controller.signal,
                 });
@@ -194,7 +194,7 @@ const GameList: React.FC = () => {
                         aria-label="Create game"
                         title="Create game"
                     >
-                        +
+                        <span>+</span>
                     </a>
                 </div>
             </div>
@@ -238,7 +238,7 @@ const GameList: React.FC = () => {
                                       ? "Ranked"
                                       : "Casual"}
                             </div>
-                            <div className="cell">{g.players ?? "—"}</div>
+                            <div className="cell">{g.players ?? "—"} / 2</div>
                         </a>
                     ))}
 

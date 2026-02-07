@@ -38,6 +38,7 @@
         }
 
         .plus {
+            display: flex;
             width: 34px;
             height: 34px;
             display: grid;
@@ -49,8 +50,13 @@
             font-size: 1.4rem;
             line-height: 1;
 
+            & span {
+                display: block;
+                transform: translateY(-2px);
+            }
+
             &:hover {
-                background: #a56565;
+                background: #b3b2b2;
             }
         }
     }
