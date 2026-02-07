@@ -4,6 +4,7 @@ import { API_BASE } from "../config";
 import GoBoardSVG from "../components/GoBoardSVG";
 import type { Board } from "../components/GoBoardSVG";
 import GameHistory from "../components/GameHistory";
+import PlayerClock from "../components/PlayerClock";
 
 interface GameInfo {
     players: [string, string];
@@ -171,9 +172,16 @@ const Game: React.FC = () => {
         }
     };
 
-    const getDisplayedTime = (player: number) => {
+    const getClockView = (player: number) => {
         const clock = clocks[player];
-        if (!clock) return null;
+        if (!clock) {
+            return {
+                remainingMs: null,
+                isByoYomi: false,
+                byoPeriodsLeft: 0,
+                byoPeriodMs: 0,
+            };
+        }
 
         let remaining =
             clock.main_remaining_ms > 0
@@ -184,9 +192,13 @@ const Game: React.FC = () => {
             remaining -= Date.now() - clockReceivedAt;
         }
 
-        return Math.max(0, remaining);
+        return {
+            remainingMs: Math.max(0, remaining),
+            isByoYomi: clock.main_remaining_ms <= 0,
+            byoPeriodsLeft: clock.byo_periods_left,
+            byoPeriodMs: clock.byo_remaining_ms,
+        };
     };
-
 
     const formatTime = (ms: number) => {
         const totalSeconds = Math.ceil(ms / 1000);
@@ -194,8 +206,6 @@ const Game: React.FC = () => {
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     };
-
-
 
     const backToLive = () => {
         setViewMoveNum(null);
@@ -212,41 +222,6 @@ const Game: React.FC = () => {
     const isLobbyWaiting = status.role === "player" && !opponentJoined;
 
     const canPlay = status.role === "player" && isLive && opponentJoined;
-
-    const PlayerClock: React.FC<{
-        label: string;
-        player: number;
-        active: boolean;
-    }> = ({ label, player, active }) => {
-        const remaining = getDisplayedTime(player);
-        const clock = clocks[player];
-
-        if (!clock) return null;
-
-        return (
-            <div
-                style={{
-                    padding: "6px 10px",
-                    borderRadius: 6,
-                    border: "1px solid #ddd",
-                    background: active ? "#eef6ff" : "#fafafa",
-                    marginBottom: 6,
-                }}
-            >
-                <div style={{ fontWeight: 600 }}>{label}</div>
-                <div style={{ fontSize: 18 }}>
-                    {remaining !== null ? formatTime(remaining) : "--:--"}
-                </div>
-
-                {clock.main_remaining_ms <= 0 && (
-                    <div style={{ fontSize: 12, color: "#555" }}>
-                        Byo-yomi: {clock.byo_periods_left} ×{" "}
-                        {formatTime(clock.byo_remaining_ms)}
-                    </div>
-                )}
-            </div>
-        );
-    };
 
     return (
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
@@ -295,13 +270,13 @@ const Game: React.FC = () => {
                 <div style={{ marginBottom: 12 }}>
                     <PlayerClock
                         label="⚫ Black"
-                        player={2}
                         active={gameInfo.turn === 2}
+                        {...getClockView(2)}
                     />
                     <PlayerClock
                         label="⚪ White"
-                        player={1}
                         active={gameInfo.turn === 1}
+                        {...getClockView(1)}
                     />
                 </div>
 
