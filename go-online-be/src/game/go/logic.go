@@ -165,11 +165,11 @@ func (g *Game) PlayMove(player string, x, y int) error {
 		g.GameProgress = GAME_IN_PROGRESS
 	}
 
+	g.MoveNum++
+
 	saveGameToDB(g)
 	saveMoveToDB(g, m)
 	saveSnapshotIfNeededToDB(g)
-
-	g.MoveNum++
 
 	return nil
 }
