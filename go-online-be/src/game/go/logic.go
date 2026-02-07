@@ -94,13 +94,25 @@ func switchTurn(g *Game) {
 }
 
 func (g *Game) Join(player string) error {
-	if g.Players[1] != "" {
-		return fmt.Errorf("game is full")
+	if g.Players[0] == player || g.Players[1] == player {
+		return nil
 	}
-	g.Players[1] = player
-	PlayerToGame[player] = g
-	saveGameToDB(g)
-	return nil
+
+	if g.Players[0] == "" {
+		g.Players[0] = player
+		PlayerToGame[player] = g
+		saveGameToDB(g)
+		return nil
+	}
+
+	if g.Players[1] == "" {
+		g.Players[1] = player
+		PlayerToGame[player] = g
+		saveGameToDB(g)
+		return nil
+	}
+
+	return fmt.Errorf("game is full")
 }
 
 func (g *Game) Leave(player string) error {
