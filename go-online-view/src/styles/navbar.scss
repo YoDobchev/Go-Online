@@ -1,17 +1,15 @@
-// :root {
-//     --nav-h: 64px;
-// }
+$nav-h: 60px;
 
-// body {
-//     padding-top: var(--nav-h); // prevents content hiding behind fixed navbar
-// }
+body {
+    padding-top: $nav-h;
+}
 
 .navbar {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: var(--nav-h);
+    height: $nav-h;
     z-index: 1000;
 
     display: flex;
@@ -61,7 +59,7 @@
 }
 
 .auth {
-    display: flex; // login & register side-by-side
+    display: flex;
     gap: 1rem;
 
     .register {
@@ -74,7 +72,6 @@
     color: #999;
 }
 
-// profile dropdown
 .profile-wrap {
     position: relative;
 }

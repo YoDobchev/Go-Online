@@ -2,6 +2,7 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
 import { UserContext } from "../context/UserContext";
+import "../styles/GameCurrIn.scss";
 
 interface GameStatus {
     id: string;
@@ -31,15 +32,15 @@ const GameCurrIn: React.FC = () => {
     if (loading || !user) return <div>Checking game status...</div>;
 
     return (
-        <div>
+        <>
             {user.isInGameWithID != "" ? (
-                <div>
+                <div className="gamecurrin-box">
                     <a href={"/game/" + user.isInGameWithID}>You are in a game! {user.isInGameWithID}</a>
                 </div>
             ) : (
                 <button onClick={createNewGame}>Create new game</button>
             )}
-        </div>
+        </>
     );
 };
 

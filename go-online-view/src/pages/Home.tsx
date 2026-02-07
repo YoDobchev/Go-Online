@@ -1,18 +1,14 @@
 import Navbar from "../components/Navbar";
 import GameCurrIn from "../components/GameCurrIn";
 import GameList from "../components/GameList";
+import "../styles/Home.scss";
 
 const Home: React.FC = () => {
     return (
-        <div>
+        <div className="homePage">
             <Navbar />
             <GameCurrIn />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
+
             <GameList />
         </div>
     );
