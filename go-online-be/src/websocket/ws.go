@@ -35,8 +35,27 @@ type client struct {
 }
 
 type gameHub struct {
-	mu      sync.Mutex
-	clients map[*websocket.Conn]*client
+	mu       sync.Mutex
+	clients  map[*websocket.Conn]*client
+	pumpOnce sync.Once
+}
+
+func (h *gameHub) startPump(game *gogame.Game) {
+	h.pumpOnce.Do(func() {
+		go func() {
+			for {
+				select {
+				case ev, ok := <-game.Events:
+					if !ok {
+						return
+					}
+					h.broadcast(ev)
+				case <-game.Done():
+					return
+				}
+			}
+		}()
+	})
 }
 
 func newGameHub() *gameHub {
@@ -167,11 +186,7 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	go func() {
-		for ev := range game.Events {
-			hub.broadcast(ev)
-		}
-	}()
+	hub.startPump(game)
 
 	for {
 		var msg WSMessage

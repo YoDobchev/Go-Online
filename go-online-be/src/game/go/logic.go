@@ -49,6 +49,9 @@ type Game struct {
 	BlackPoints    int
 	EndedByTimeout bool
 
+	done     chan struct{}
+	doneOnce sync.Once
+
 	Komi float32
 
 	MoveNum int
@@ -104,8 +107,9 @@ func NewGame(creator string, settings NewGameSettings) (*Game, error) {
 	g.hash = g.zobrist.HashBoard(g.Board.Squares, true)
 	g.seen = make(map[uint64]struct{})
 
-	g.Events = make(chan map[string]any)
-	g.MovePlayed = make(chan struct{})
+	g.Events = make(chan map[string]any, 64)
+	g.MovePlayed = make(chan struct{}, 16)
+	g.done = make(chan struct{})
 
 	saveGameToDB(g)
 	saveSnapshotIfNeededToDB(g)
@@ -189,6 +193,7 @@ func (g *Game) startClock() {
 					g.mu.Lock()
 					g.EndedByTimeout = true
 					g.GameProgress = GAME_ENDED
+					g.end()
 					g.WinnerIndex = 1 - turn
 					g.mu.Unlock()
 
@@ -216,6 +221,8 @@ func (g *Game) startClock() {
 					return
 				}
 				g.Clock.Switch(turn)
+			case <-g.Done():
+				return
 			}
 		}
 	}()
@@ -335,6 +342,7 @@ func (g *Game) ApplyMove(m Move) error {
 func (g *Game) endGame() {
 	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
+	g.end()
 	if g.WhitePoints > g.BlackPoints {
 		g.WinnerIndex = 1
 	} else if g.BlackPoints > g.WhitePoints {
@@ -349,6 +357,12 @@ func (g *Game) hashMove(placedStone Stone, otherColorDeletedChains [][]Stone) {
 			g.hash = g.zobrist.ToggleStone(g.hash, stone)
 		}
 	}
+}
+
+func (g *Game) Done() <-chan struct{} { return g.done }
+
+func (g *Game) end() {
+	g.doneOnce.Do(func() { close(g.done) })
 }
 
 func (g *Game) Print() {
