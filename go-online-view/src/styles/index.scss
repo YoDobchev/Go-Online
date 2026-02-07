@@ -21,10 +21,8 @@ body {
 #root {
     background-color: #fff;
     display: flex;
-    padding-top: 100px;
-    height: 100vh;
-    width: 100vw;
     color: #000;
+    width: 100%;
 
     * {
         color: inherit;
