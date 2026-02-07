@@ -9,6 +9,8 @@ import (
 type User struct {
 	ID       int    `gorm:"primaryKey"`
 	Email    string `gorm:"unique;not null"`
+	Elo      int    `gorm:"not null;default:1500"`
+	Role     string `gorm:"not null;default:'user'"`
 	Username string `gorm:"unique;not null"`
 	Password string `gorm:"not null"`
 }
@@ -25,6 +27,7 @@ type Session struct {
 
 type Game struct {
 	ID        string `gorm:"primaryKey;type:text"`
+	Ranked    bool   `gorm:"not null;default:false"`
 	BoardSize int    `gorm:"not null"`
 
 	PlayerBlack *string `gorm:"type:text"`

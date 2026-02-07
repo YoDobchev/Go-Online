@@ -18,15 +18,20 @@ func LoadGamesFromDB() {
 
 	for _, dbGame := range dbGames {
 		var playerBlack, playerWhite string
-		playerBlack = *dbGame.PlayerBlack
-		playerWhite = *dbGame.PlayerWhite
 
+		if dbGame.PlayerBlack != nil {
+			playerBlack = *dbGame.PlayerBlack
+		}
+		if dbGame.PlayerWhite != nil {
+			playerWhite = *dbGame.PlayerWhite
+		}
 		board, err := GetBoardStateOnMoveNoFromDB(dbGame.ID, dbGame.MoveNo)
 		if err != nil {
 			panic(err)
 		}
 		g := &Game{
 			ID:           dbGame.ID,
+			Ranked:       dbGame.Ranked,
 			Players:      [2]string{playerBlack, playerWhite},
 			Board:        board,
 			CurrectTurn:  dbGame.CurrentTurn,
