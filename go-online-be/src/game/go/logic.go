@@ -29,6 +29,13 @@ const (
 	GAME_ENDED
 )
 
+type NewGameSettings struct {
+	PlayAs    int
+	BoardSize int
+	Ranked    bool
+	// Time      string `json:"time"`
+}
+
 type Game struct {
 	ID          string
 	Ranked      bool
@@ -67,9 +74,9 @@ var (
 	ErrIllegalKoMove        = errors.New("Illegal Ko move (Superko rule)")
 )
 
-func NewGame(boardSize int, creator string) (*Game, error) {
+func NewGame(creator string, settings NewGameSettings) (*Game, error) {
 	g := new(Game)
-	board, err := NewBoard(boardSize)
+	board, err := NewBoard(settings.BoardSize)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +89,15 @@ func NewGame(boardSize int, creator string) (*Game, error) {
 	GameInstances[g.ID] = g
 	PlayerToGame[creator] = g
 
-	g.Players[0] = creator
-	g.CurrectTurn = Black
+	if settings.PlayAs == 2 {
+		settings.PlayAs = rand.Intn(2)
+	}
 
-	g.zobrist = NewZobristTable(boardSize)
+	g.Players[settings.PlayAs] = creator
+	g.CurrectTurn = Black
+	g.Ranked = settings.Ranked
+
+	g.zobrist = NewZobristTable(settings.BoardSize)
 	g.hash = g.zobrist.HashBoard(g.Board.Squares, true)
 	g.seen = make(map[uint64]struct{})
 

@@ -117,6 +117,10 @@ func GetBoardStateOnMoveNoFromDB(gameID string, moveNo int) (*Board, error) {
 }
 
 func saveMoveToDB(g *Game, m Move) error {
+	if database.DB == nil {
+		return nil
+	}
+
 	move := database.GameMove{
 		GameID:        g.ID,
 		MoveNo:        g.MoveNum,
@@ -130,6 +134,10 @@ func saveMoveToDB(g *Game, m Move) error {
 }
 
 func saveGameToDB(g *Game) error {
+	if database.DB == nil {
+		return nil
+	}
+
 	var playerBlack, playerWhite *string
 	if g.Players[0] != "" {
 		playerBlack = &g.Players[0]
@@ -141,6 +149,7 @@ func saveGameToDB(g *Game) error {
 	dbGame := database.Game{
 		ID:           g.ID,
 		BoardSize:    g.Board.Size,
+		Ranked:       g.Ranked,
 		PlayerBlack:  playerBlack,
 		PlayerWhite:  playerWhite,
 		CurrentTurn:  g.CurrectTurn,
@@ -157,6 +166,10 @@ func saveGameToDB(g *Game) error {
 }
 
 func saveSnapshotIfNeededToDB(g *Game) error {
+	if database.DB == nil {
+		return nil
+	}
+
 	if g.MoveNum%SnapshotInterval != 0 && g.GameProgress != GAME_ENDED {
 		return nil
 	}

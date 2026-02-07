@@ -153,6 +153,8 @@ func meHandler(w http.ResponseWriter, r *http.Request) {
 		"email":          user.Email,
 		"username":       user.Username,
 		"isInGameWithID": gameID,
+		"elo":            user.Elo,
+		"role":           user.Role,
 	}
 
 	writeJSON(w, http.StatusOK, resp)

@@ -8,6 +8,8 @@ export type UserContextValue = {
             email: string;
             username: string;
             isInGameWithID: string;
+            elo: number;
+            role: "user" | "moderator" | "admin";
         } | null,
     ) => void;
 };

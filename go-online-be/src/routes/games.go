@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -25,14 +26,31 @@ func GamesRoutes() *chi.Mux {
 	return r
 }
 
+type createGameReq struct {
+	PlayAs    int  `json:"playAs"`
+	BoardSize int  `json:"boardSize"`
+	Ranked    bool `json:"ranked"`
+}
+
 func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
+	var req createGameReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
 	user, ok := middleware.GetUserFromCtx(r)
 	if !ok {
 		http.Error(w, "user missing", http.StatusUnauthorized)
 		return
 	}
 
-	newGame, err := gogame.NewGame(19, user.Username)
+	newGame, err := gogame.NewGame(user.Username, gogame.NewGameSettings{
+		PlayAs:    req.PlayAs,
+		BoardSize: req.BoardSize,
+		Ranked:    req.Ranked,
+	})
+
 	if err != nil {
 		http.Error(w, "could not create game", http.StatusInternalServerError)
 		return

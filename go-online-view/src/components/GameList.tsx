@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
 import "../styles/gamelist.scss";
+import { useNavigate } from "react-router-dom";
+
+type GameStatus = { id: number | string };
 
 type Game = {
     id: number | string;
@@ -99,10 +102,13 @@ const GameList: React.FC = () => {
                 setLoading(true);
                 setError(null);
 
-                const res = await fetch(`${API_BASE}/search/games?${queryString}`, {
-                    credentials: "include",
-                    signal: controller.signal,
-                });
+                const res = await fetch(
+                    `${API_BASE}/search/games?${queryString}`,
+                    {
+                        credentials: "include",
+                        signal: controller.signal,
+                    },
+                );
 
                 if (!res.ok)
                     throw new Error(`Failed to load games (${res.status})`);
@@ -129,13 +135,57 @@ const GameList: React.FC = () => {
 
     const resetToPage1 = () => setPage(1);
 
+    const navigate = useNavigate();
+
+    const [createOpen, setCreateOpen] = useState(false);
+    const [playAs, setPlayAs] = useState(0);
+    const [createSize, setCreateSize] = useState<SizeFilter>("19");
+    const [createRanked, setCreateRanked] = useState(true);
+    const [creating, setCreating] = useState(false);
+
+    useEffect(() => {
+        if (!createOpen) return;
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setCreateOpen(false);
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, [createOpen]);
+
+    const createNewGame = async () => {
+        try {
+            setCreating(true);
+
+            const payload = {
+                playAs: playAs,
+                boardSize: Number(createSize),
+                ranked: createRanked,
+            };
+
+            const res = await fetch(`${API_BASE}/game/`, {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) throw new Error("Failed to create new game");
+
+            const data: GameStatus = await res.json();
+
+            setCreateOpen(false);
+
+            navigate(`/game/${data.id}`);
+        } catch (err) {
+            console.error("Failed to create new game", err);
+        } finally {
+            setCreating(false);
+        }
+    };
+
     return (
         <div className="gamelist">
             <div className="gamelist-bar">
-                {/* <div className="bar-left">
-                    <div className="title">Games</div>
-                </div> */}
-
                 <div className="bar-right">
                     <input
                         value={q}
@@ -171,7 +221,7 @@ const GameList: React.FC = () => {
                     >
                         <option value="all">Type</option>
                         <option value="ranked">Ranked</option>
-                        <option value="casual">Casual</option>
+                        <option value="unranked">unranked</option>
                     </select>
 
                     <select
@@ -188,14 +238,15 @@ const GameList: React.FC = () => {
                         <option value="19">19x19</option>
                     </select>
 
-                    <a
+                    <button
+                        type="button"
                         className="plus"
-                        href="/games/create"
+                        onClick={() => setCreateOpen(true)}
                         aria-label="Create game"
                         title="Create game"
                     >
                         <span>+</span>
-                    </a>
+                    </button>
                 </div>
             </div>
 
@@ -221,7 +272,7 @@ const GameList: React.FC = () => {
                         <a
                             key={g.id}
                             className="gamerow"
-                            href={`/games/${g.id}`}
+                            href={`/game/${g.id}`}
                         >
                             <div className="cell muted">{g.id}</div>
                             <div className="cell">{g.name ?? "—"}</div>
@@ -236,7 +287,7 @@ const GameList: React.FC = () => {
                                     ? "—"
                                     : g.ranked
                                       ? "Ranked"
-                                      : "Casual"}
+                                      : "Unranked"}
                             </div>
                             <div className="cell">{g.players ?? "—"} / 2</div>
                         </a>
@@ -264,6 +315,86 @@ const GameList: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {createOpen && (
+                <div
+                    className="modal-backdrop"
+                    onMouseDown={() => !creating && setCreateOpen(false)}
+                    role="presentation"
+                >
+                    <div
+                        className="modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label="Create game"
+                        onMouseDown={(e) => e.stopPropagation()}
+                    >
+                        <div className="modal-title">Create game</div>
+
+                        <div className="modal-row">
+                            <label>Play as</label>
+                            <select
+                                value={playAs}
+                                onChange={(e) =>
+                                    setPlayAs(parseInt(e.target.value))
+                                }
+                                disabled={creating}
+                            >
+                                <option value="0">Black</option>
+                                <option value="1">White</option>
+                                <option value="2">Random</option>
+                            </select>
+                        </div>
+
+                        <div className="modal-row">
+                            <label>Board size</label>
+                            <select
+                                value={createSize}
+                                onChange={(e) =>
+                                    setCreateSize(parseSize(e.target.value))
+                                }
+                                disabled={creating}
+                            >
+                                <option value="9">9x9</option>
+                                <option value="13">13x13</option>
+                                <option value="19">19x19</option>
+                            </select>
+                        </div>
+
+                        <div className="modal-row">
+                            <label>Type</label>
+                            <select
+                                value={createRanked ? "ranked" : "unrakned"}
+                                onChange={(e) =>
+                                    setCreateRanked(e.target.value === "ranked")
+                                }
+                                disabled={creating}
+                            >
+                                <option value="ranked">Ranked</option>
+                                <option value="unranked">Unranked</option>
+                            </select>
+                        </div>
+
+                        <div className="modal-actions">
+                            <button
+                                type="button"
+                                onClick={() => setCreateOpen(false)}
+                                disabled={creating}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={createNewGame}
+                                disabled={creating}
+                            >
+                                {creating ? "Creating…" : "Create"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

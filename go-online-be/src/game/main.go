@@ -66,7 +66,11 @@ func execMove(coords [2]string) error {
 
 func main() {
 	var err error
-	g, err = gogame.NewGame(9, "black")
+	g, err = gogame.NewGame("black", gogame.NewGameSettings{
+		PlayAs:    0,
+		BoardSize: 19,
+		Ranked:    false,
+	})
 	if err != nil {
 		fmt.Println(err)
 	}
