@@ -112,21 +112,23 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 	seat := "spectator"
 
 	if username != "" {
-		if username == game.Players[0] {
+		switch username {
+		case game.Players[0]:
 			role = "player"
 			seat = "black"
-		} else if username == game.Players[1] {
+		case game.Players[1]:
 			role = "player"
 			seat = "white"
-		} else {
+		default:
 			if game.GameProgress == gogame.GAME_WAITING_FOR_PLAYER &&
 				(game.Players[0] == "" || game.Players[1] == "") {
 
 				if err := game.Join(username); err == nil {
-					if username == game.Players[0] {
+					switch username {
+					case game.Players[0]:
 						role = "player"
 						seat = "black"
-					} else if username == game.Players[1] {
+					case game.Players[1]:
 						role = "player"
 						seat = "white"
 					}
@@ -164,6 +166,12 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 			"moveNum": game.MoveNum,
 		},
 	})
+
+	go func() {
+		for ev := range game.Events {
+			hub.broadcast(ev)
+		}
+	}()
 
 	for {
 		var msg WSMessage
@@ -206,13 +214,15 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if game.GameProgress == gogame.GAME_ENDED {
-			hub.broadcast(map[string]any{
-				"type": "game_ended",
-				"data": map[string]any{
-					"white_points": game.WhitePoints,
-					"black_points": game.BlackPoints,
-				},
-			})
+			if !game.EndedByTimeout {
+				hub.broadcast(map[string]any{
+					"type": "game_ended",
+					"data": map[string]any{
+						"white_points": game.WhitePoints,
+						"black_points": game.BlackPoints,
+					},
+				})
+			}
 
 			hub.mu.Lock()
 			for cconn := range hub.clients {

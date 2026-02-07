@@ -30,7 +30,8 @@ type ServerMsg =
           type: "game_ended";
           data: { white_points: number; black_points: number };
       }
-    | { type: "error"; data: string };
+    | { type: "error"; data: string }
+    | { type: "timeout"; data: { loser: number } };
 
 const Game: React.FC = () => {
     const { gameID } = useParams<{ gameID: string }>();
@@ -65,6 +66,8 @@ const Game: React.FC = () => {
             } else if (msg.type === "game_ended") {
                 console.log(msg.type, msg.data);
                 console.log("gameended");
+            } else if (msg.type === "timeout") {
+                console.log(`${msg.data.loser} ran out of time`);
             } else if (msg.type === "error") {
                 console.error("Server error:", msg.data);
             }
