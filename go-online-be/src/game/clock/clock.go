@@ -124,18 +124,30 @@ func (c *Clock) GetClockUpdate(player uint8) map[string]any {
 	playerTime := c.players[player]
 
 	var main time.Duration
-	var byoYomi time.Duration
+
+	byoYomi := playerTime.ByoRemaining
+	byoYomiPeriods := playerTime.ByoPeriodsLeft
+	inByoYomi := false
 
 	if playerTime.MainRemaining <= time.Since(c.lastStart) {
+		inByoYomi = true
 		difference := time.Since(c.lastStart) - playerTime.MainRemaining
 		main = 0
-		byoYomi = playerTime.ByoRemaining - difference
+		for difference > 0 && byoYomiPeriods > 0 {
+			if byoYomi > difference {
+				byoYomi -= difference
+				difference = 0
+			} else {
+				difference -= byoYomi
+				byoYomiPeriods--
+				byoYomi = c.format.ByoYomi
+			}
+		}
 		if byoYomi < 0 {
 			byoYomi = 0
 		}
 	} else {
 		main = playerTime.MainRemaining - time.Since(c.lastStart)
-		byoYomi = playerTime.ByoRemaining
 	}
 
 	return map[string]any{
@@ -144,8 +156,8 @@ func (c *Clock) GetClockUpdate(player uint8) map[string]any {
 			"player":            c.current,
 			"main_remaining_ms": main.Milliseconds(),
 			"byo_remaining_ms":  byoYomi.Milliseconds(),
-			"byo_periods_left":  playerTime.ByoPeriodsLeft,
-			"in_byo_yomi":       playerTime.InByoYomi,
+			"byo_periods_left":  byoYomiPeriods,
+			"in_byo_yomi":       inByoYomi,
 			"server_time":       time.Now().UnixMilli(),
 		},
 	}
