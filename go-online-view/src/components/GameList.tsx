@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
 import "../styles/gamelist.scss";
 import { useNavigate } from "react-router-dom";
+import BottomCenMsg from "./BottomCenMsg";
 
 type GameStatus = { id: number | string };
 
@@ -152,6 +153,13 @@ const GameList: React.FC = () => {
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [createOpen]);
 
+    const [show, setShow] = useState(false);
+    const [msg, setMsg] = useState("");
+
+    const triggerErrMsg = (text: string) => {
+        setMsg(text);
+        setShow(true);
+    };
     const createNewGame = async () => {
         try {
             setCreating(true);
@@ -169,7 +177,15 @@ const GameList: React.FC = () => {
                 body: JSON.stringify(payload),
             });
 
-            if (!res.ok) throw new Error("Failed to create new game");
+            if (!res.ok) {
+                const errorText = await res.text();
+
+                if (errorText.includes("user already in a game")) {
+                    triggerErrMsg("You are already in a game!");
+                }
+
+                throw new Error(errorText || "Failed to create new game");
+            }
 
             const data: GameStatus = await res.json();
 
@@ -395,6 +411,15 @@ const GameList: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <BottomCenMsg
+                visible={show}
+                message={msg}
+                backgroundColor="#e90e0e"
+                textColor="#f7f7f7"
+                timeAfterFadeMs={2000}
+                onClose={() => setShow(false)}
+            />
         </div>
     );
 };

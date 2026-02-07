@@ -33,15 +33,21 @@ type createGameReq struct {
 }
 
 func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
-	var req createGameReq
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid JSON", http.StatusBadRequest)
-		return
-	}
-
 	user, ok := middleware.GetUserFromCtx(r)
 	if !ok {
 		http.Error(w, "user missing", http.StatusUnauthorized)
+		return
+	}
+
+	_, exists := gogame.PlayerToGame[user.Username]
+	if exists {
+		http.Error(w, "user already in a game", http.StatusBadRequest)
+		return
+	}
+
+	var req createGameReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
 
