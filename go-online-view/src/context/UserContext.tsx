@@ -1,7 +1,14 @@
 import { createContext } from "react";
 
 export type UserContextValue = {
-    user: { email: string; username: string; isInGameWithID: string } | null;
+    user: {
+        email: string;
+        username: string;
+        isInGameWithID: string;
+        elo: number;
+        role: "user" | "moderator" | "admin";
+        rank: string;
+    } | null;
     loading: boolean;
     setUser: (
         user: {
@@ -10,6 +17,7 @@ export type UserContextValue = {
             isInGameWithID: string;
             elo: number;
             role: "user" | "moderator" | "admin";
+            rank: string
         } | null,
     ) => void;
 };

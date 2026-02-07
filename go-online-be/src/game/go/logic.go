@@ -49,6 +49,8 @@ type Game struct {
 	BlackPoints    int
 	EndedByTimeout bool
 
+	Komi float32
+
 	MoveNum int
 
 	Board *Board
@@ -196,6 +198,11 @@ func (g *Game) startClock() {
 							"loser": turn,
 						},
 					}
+
+					delete(PlayerToGame, g.Players[0])
+					delete(PlayerToGame, g.Players[1])
+
+					saveGameToDB(g)
 					return
 				}
 

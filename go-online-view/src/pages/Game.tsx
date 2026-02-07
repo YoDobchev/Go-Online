@@ -53,8 +53,6 @@ const Game: React.FC = () => {
     const [clocks, setClocks] = useState<Record<number, ClockSnapshot>>({});
     const [clockReceivedAt, setClockReceivedAt] = useState<number>(Date.now());
 
-
-
     const wsRef = useRef<WebSocket | null>(null);
 
     useEffect(() => {

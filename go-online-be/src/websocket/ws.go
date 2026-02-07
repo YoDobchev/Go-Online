@@ -225,6 +225,9 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 				})
 			}
 
+			delete(gogame.PlayerToGame, game.Players[0])
+			delete(gogame.PlayerToGame, game.Players[1])
+
 			hub.mu.Lock()
 			for cconn := range hub.clients {
 				_ = cconn.Close()

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
+	"github.com/YoDobchev/Go-Online/src/elo"
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/middleware"
 	"github.com/go-chi/chi/v5"
@@ -92,6 +93,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		"message": "login successful",
 	})
 }
+
 func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var req RegisterReq
 
@@ -149,12 +151,15 @@ func meHandler(w http.ResponseWriter, r *http.Request) {
 		gameID = ""
 	}
 
+	rank, _ := elo.GetRank(user.Elo)
+
 	resp := map[string]any{
 		"email":          user.Email,
 		"username":       user.Username,
 		"isInGameWithID": gameID,
 		"elo":            user.Elo,
 		"role":           user.Role,
+		"rank":           rank,
 	}
 
 	writeJSON(w, http.StatusOK, resp)

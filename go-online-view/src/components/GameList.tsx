@@ -70,7 +70,13 @@ function parseSize(v: string): SizeFilter {
     return v === "9" || v === "13" || v === "19" || v === "all" ? v : "all";
 }
 
-const GameList: React.FC = () => {
+const GameList = ({
+    renderFilters = true,
+    query,
+}: {
+    renderFilters?: boolean;
+    query?: string;
+}) => {
     const [games, setGames] = useState<Game[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -84,6 +90,9 @@ const GameList: React.FC = () => {
     const [size, setSize] = useState<SizeFilter>("all");
 
     const queryString = useMemo(() => {
+        if (query !== undefined) {
+            return query;
+        }
         const params = new URLSearchParams();
         params.set("p", String(page));
         if (q.trim()) params.set("q", q.trim());
@@ -92,7 +101,7 @@ const GameList: React.FC = () => {
             params.set("ranked", ranked === "ranked" ? "true" : "false");
         if (size !== "all") params.set("size", size);
         return params.toString();
-    }, [page, q, status, ranked, size]);
+    }, [query, page, q, status, ranked, size]);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -148,70 +157,72 @@ const GameList: React.FC = () => {
 
     return (
         <div className="gamelist">
-            <div className="gamelist-bar">
-                <div className="bar-right">
-                    <input
-                        value={q}
-                        onChange={(e) => {
-                            setQ(e.target.value);
-                            resetToPage1();
-                        }}
-                        placeholder="Search…"
-                        aria-label="Search games"
-                    />
+            {renderFilters && (
+                <div className="gamelist-bar">
+                    <div className="bar-right">
+                        <input
+                            value={q}
+                            onChange={(e) => {
+                                setQ(e.target.value);
+                                resetToPage1();
+                            }}
+                            placeholder="Search…"
+                            aria-label="Search games"
+                        />
 
-                    <select
-                        value={status}
-                        onChange={(e) => {
-                            setStatus(parseStatus(e.target.value));
-                            resetToPage1();
-                        }}
-                        aria-label="Filter by status"
-                    >
-                        <option value="all">Status</option>
-                        <option value="open">Open</option>
-                        <option value="running">Running</option>
-                        <option value="finished">Finished</option>
-                    </select>
+                        <select
+                            value={status}
+                            onChange={(e) => {
+                                setStatus(parseStatus(e.target.value));
+                                resetToPage1();
+                            }}
+                            aria-label="Filter by status"
+                        >
+                            <option value="all">Status</option>
+                            <option value="open">Open</option>
+                            <option value="running">Running</option>
+                            <option value="finished">Finished</option>
+                        </select>
 
-                    <select
-                        value={ranked}
-                        onChange={(e) => {
-                            setRanked(parseRanked(e.target.value));
-                            resetToPage1();
-                        }}
-                        aria-label="Filter by type"
-                    >
-                        <option value="all">Type</option>
-                        <option value="ranked">Ranked</option>
-                        <option value="unranked">unranked</option>
-                    </select>
+                        <select
+                            value={ranked}
+                            onChange={(e) => {
+                                setRanked(parseRanked(e.target.value));
+                                resetToPage1();
+                            }}
+                            aria-label="Filter by type"
+                        >
+                            <option value="all">Type</option>
+                            <option value="ranked">Ranked</option>
+                            <option value="unranked">unranked</option>
+                        </select>
 
-                    <select
-                        value={size}
-                        onChange={(e) => {
-                            setSize(parseSize(e.target.value));
-                            resetToPage1();
-                        }}
-                        aria-label="Filter by board size"
-                    >
-                        <option value="all">Size</option>
-                        <option value="9">9x9</option>
-                        <option value="13">13x13</option>
-                        <option value="19">19x19</option>
-                    </select>
+                        <select
+                            value={size}
+                            onChange={(e) => {
+                                setSize(parseSize(e.target.value));
+                                resetToPage1();
+                            }}
+                            aria-label="Filter by board size"
+                        >
+                            <option value="all">Size</option>
+                            <option value="9">9x9</option>
+                            <option value="13">13x13</option>
+                            <option value="19">19x19</option>
+                        </select>
 
-                    <button
-                        type="button"
-                        className="plus"
-                        onClick={() => setCreateOpen(true)}
-                        aria-label="Create game"
-                        title="Create game"
-                    >
-                        <span>+</span>
-                    </button>
+                        <button
+                            type="button"
+                            className="plus"
+                            onClick={() => setCreateOpen(true)}
+                            aria-label="Create game"
+                            title="Create game"
+                        >
+                            <span>+</span>
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="gamelist-box">
                 <div className="gamelist-header">

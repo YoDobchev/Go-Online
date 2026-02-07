@@ -32,6 +32,9 @@ type Game struct {
 
 	PlayerBlack *string `gorm:"type:text"`
 	PlayerWhite *string `gorm:"type:text"`
+	WinnerIndex uint8
+
+	Komi float32 `gorm:"not null;default:7.5"`
 
 	CurrentTurn  uint8 `gorm:"not null"` // 1=white|2=black
 	Passed       bool  `gorm:"not null;default:false"`
