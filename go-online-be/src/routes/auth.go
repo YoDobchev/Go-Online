@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
@@ -99,6 +100,11 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if strings.EqualFold(req.Username, "KataGo") {
+		http.Error(w, "username reserved", http.StatusConflict)
 		return
 	}
 

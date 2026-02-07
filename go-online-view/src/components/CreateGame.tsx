@@ -36,6 +36,7 @@ const CreateGame: React.FC<Props> = ({
     const [playAs, setPlayAs] = useState<PlayAs>(defaultPlayAs);
     const [createSize, setCreateSize] = useState<CreateSize>(defaultSize);
     const [createRanked, setCreateRanked] = useState<boolean>(defaultRanked);
+    const [vsAI, setVsAI] = useState(false);
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
@@ -64,6 +65,7 @@ const CreateGame: React.FC<Props> = ({
                 playAs,
                 boardSize: Number(createSize),
                 ranked: createRanked,
+                vsAI
             };
 
             const res = await fetch(`${API_BASE}/game/`, {
@@ -140,6 +142,18 @@ const CreateGame: React.FC<Props> = ({
                 </div>
 
                 <div className="modal-row">
+                    <label>Opponent</label>
+                    <select
+                        value={vsAI ? "ai" : "human"}
+                        onChange={(e) => setVsAI(e.target.value === "ai")}
+                        disabled={creating}
+                    >
+                        <option value="human">Human</option>
+                        <option value="ai">KataGo (AI)</option>
+                    </select>
+                </div>
+
+                <div className="modal-row">
                     <label>Type</label>
                     <select
                         value={createRanked ? "ranked" : "unranked"}
@@ -154,11 +168,7 @@ const CreateGame: React.FC<Props> = ({
                 </div>
 
                 <div className="modal-actions">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={creating}
-                    >
+                    <button type="button" onClick={onClose} disabled={creating}>
                         Cancel
                     </button>
 

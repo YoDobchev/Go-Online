@@ -33,6 +33,7 @@ type NewGameSettings struct {
 	PlayAs    int
 	BoardSize int
 	Ranked    bool
+	VsAI      bool
 	// Time      string `json:"time"`
 }
 
@@ -43,6 +44,7 @@ type Game struct {
 	WinnerIndex uint8
 	CurrectTurn uint8
 	passed      bool
+	VsAI        bool
 
 	GameProgress   uint8
 	WhitePoints    int
@@ -102,6 +104,11 @@ func NewGame(creator string, settings NewGameSettings) (*Game, error) {
 	g.Players[settings.PlayAs] = creator
 	g.CurrectTurn = Black
 	g.Ranked = settings.Ranked
+	g.VsAI = settings.VsAI
+
+	if g.VsAI {
+		_ = g.Join("KataGo")
+	}
 
 	g.zobrist = NewZobristTable(settings.BoardSize)
 	g.hash = g.zobrist.HashBoard(g.Board.Squares, true)
@@ -258,6 +265,9 @@ func (g *Game) Leave(player string) error {
 }
 
 func (g *Game) PlayMove(player string, x, y int) error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
 	if (g.CurrectTurn == Black && player != g.Players[0]) ||
 		(g.CurrectTurn == White && player != g.Players[1]) {
 		return fmt.Errorf("not your turn")
@@ -269,13 +279,24 @@ func (g *Game) PlayMove(player string, x, y int) error {
 		Y:     y,
 	}
 
-	err := g.ApplyMove(m)
-	if err != nil {
+	if err := g.ApplyMove(m); err != nil {
 		return err
 	}
 
 	g.MoveNum++
-	g.MovePlayed <- struct{}{}
+
+	select {
+	case g.MovePlayed <- struct{}{}:
+	default:
+		select {
+		case <-g.MovePlayed:
+		default:
+		}
+		select {
+		case g.MovePlayed <- struct{}{}:
+		default:
+		}
+	}
 
 	saveGameToDB(g)
 	saveMoveToDB(g, m)
@@ -283,7 +304,6 @@ func (g *Game) PlayMove(player string, x, y int) error {
 
 	return nil
 }
-
 func (g *Game) ApplyMove(m Move) error {
 	if m.Color != g.CurrectTurn {
 		return fmt.Errorf("wrong color for current turn")
@@ -298,8 +318,8 @@ func (g *Game) ApplyMove(m Move) error {
 		g.passed = true
 
 		g.hash = g.zobrist.ToggleSide(g.hash)
-
 		switchTurn(g)
+		g.seen[g.hash] = struct{}{}
 		return nil
 	}
 

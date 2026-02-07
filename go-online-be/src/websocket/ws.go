@@ -186,6 +186,18 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
+	if played, _ := gogame.MaybePlayAIMove(game); played {
+		hub.broadcast(map[string]any{
+			"type": "sync",
+			"data": map[string]any{
+				"players": game.Players,
+				"turn":    game.CurrectTurn,
+				"board":   game.Board,
+				"moveNum": game.MoveNum,
+			},
+		})
+	}
+
 	hub.startPump(game)
 
 	for {
@@ -224,6 +236,19 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 					"moveNum": game.MoveNum,
 				},
 			})
+			if played, err := gogame.MaybePlayAIMove(game); err != nil {
+				hub.broadcast(map[string]any{"type": "error", "data": "AI error: " + err.Error()})
+			} else if played {
+				hub.broadcast(map[string]any{
+					"type": "sync",
+					"data": map[string]any{
+						"players": game.Players,
+						"turn":    game.CurrectTurn,
+						"board":   game.Board,
+						"moveNum": game.MoveNum,
+					},
+				})
+			}
 		default:
 			_ = conn.WriteJSON(map[string]any{"type": "error", "data": "unknown message type"})
 		}
@@ -242,6 +267,8 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 
 			delete(gogame.PlayerToGame, game.Players[0])
 			delete(gogame.PlayerToGame, game.Players[1])
+
+			gogame.StopEngine(game.ID)
 
 			hub.mu.Lock()
 			for cconn := range hub.clients {

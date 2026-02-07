@@ -1,1 +1,4 @@
 .idea
+gtp_logs
+katago-models
+print.sh

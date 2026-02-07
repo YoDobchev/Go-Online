@@ -27,17 +27,17 @@ interface ClockSnapshot {
 
 type ServerMsg =
     | {
-        type: "hello";
-        data: {
-            role: "player" | "spectator";
-            seat: "black" | "white" | "spectator";
-        };
-    }
+          type: "hello";
+          data: {
+              role: "player" | "spectator";
+              seat: "black" | "white" | "spectator";
+          };
+      }
     | { type: "sync"; data: GameInfo }
     | {
-        type: "game_ended";
-        data: { white_points: number; black_points: number; winner: number };
-    }
+          type: "game_ended";
+          data: { white_points: number; black_points: number; winner: number };
+      }
     | { type: "error"; data: string }
     | { type: "clock_update"; data: ClockSnapshot }
     | { type: "timeout"; data: { loser: number } };
@@ -52,6 +52,8 @@ const Game: React.FC = () => {
 
     const [clocks, setClocks] = useState<Record<number, ClockSnapshot>>({});
     const [clockReceivedAt, setClockReceivedAt] = useState<number>(Date.now());
+
+    const [pendingMove, setPendingMove] = useState(false);
 
     const wsRef = useRef<WebSocket | null>(null);
 
@@ -75,6 +77,7 @@ const Game: React.FC = () => {
                 setStatus(msg.data);
             } else if (msg.type === "sync") {
                 setGameInfo(msg.data);
+                setPendingMove(false);
                 setClocks((prev) => ({
                     1: prev[1] ?? {
                         player: 1,
@@ -103,6 +106,7 @@ const Game: React.FC = () => {
             } else if (msg.type === "timeout") {
                 console.log(`${msg.data.loser} ran out of time`);
             } else if (msg.type === "error") {
+                setPendingMove(false);
                 console.error("Server error:", msg.data);
             }
         };
@@ -130,24 +134,20 @@ const Game: React.FC = () => {
     const sendMove = (row: number, col: number) => {
         const ws = wsRef.current;
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (!canPlay) return;
 
-        ws.send(
-            JSON.stringify({
-                type: "play_move",
-                data: { row, col },
-            }),
-        );
+        setPendingMove(true);
+        ws.send(JSON.stringify({ type: "play_move", data: { row, col } }));
     };
 
     const sendPass = () => {
         const ws = wsRef.current;
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
+        if (!canPlay) return;
 
+        setPendingMove(true);
         ws.send(
-            JSON.stringify({
-                type: "play_move",
-                data: { row: -1, col: -1 },
-            }),
+            JSON.stringify({ type: "play_move", data: { row: -1, col: -1 } }),
         );
     };
 
@@ -187,15 +187,12 @@ const Game: React.FC = () => {
         return Math.max(0, remaining);
     };
 
-
     const formatTime = (ms: number) => {
         const totalSeconds = Math.ceil(ms / 1000);
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     };
-
-
 
     const backToLive = () => {
         setViewMoveNum(null);
@@ -211,7 +208,15 @@ const Game: React.FC = () => {
     const opponentJoined = Boolean(gameInfo.players[1]);
     const isLobbyWaiting = status.role === "player" && !opponentJoined;
 
-    const canPlay = status.role === "player" && isLive && opponentJoined;
+    const myTurn =
+        status.seat === "black" ? 2 : status.seat === "white" ? 1 : 0;
+
+    const canPlay =
+        status.role === "player" &&
+        isLive &&
+        opponentJoined &&
+        !pendingMove &&
+        gameInfo.turn === myTurn;
 
     const PlayerClock: React.FC<{
         label: string;

@@ -30,6 +30,7 @@ type createGameReq struct {
 	PlayAs    int  `json:"playAs"`
 	BoardSize int  `json:"boardSize"`
 	Ranked    bool `json:"ranked"`
+	VsAI      bool `json:"vsAI"`
 }
 
 func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,7 @@ func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
 		PlayAs:    req.PlayAs,
 		BoardSize: req.BoardSize,
 		Ranked:    req.Ranked,
+		VsAI:      req.VsAI,
 	})
 
 	if err != nil {
