@@ -19,30 +19,10 @@ func GamesRoutes() *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
 
-		r.Get("/", getIfInGameHandler)
 		r.Post("/", postNewGameHandler)
 	})
 
 	return r
-}
-
-func getIfInGameHandler(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromCtx(r)
-	if !ok {
-		http.Error(w, "user missing", http.StatusUnauthorized)
-		return
-	}
-
-	game, inGame := gogame.PlayerToGame[user.Username]
-	if inGame {
-		writeJSON(w, http.StatusOK, map[string]string{
-			"id": game.ID,
-		})
-	} else {
-		writeJSON(w, http.StatusOK, map[string]string{
-			"id": "",
-		})
-	}
 }
 
 func postNewGameHandler(w http.ResponseWriter, r *http.Request) {

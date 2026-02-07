@@ -28,6 +28,7 @@ const (
 
 type Game struct {
 	ID          string
+	Ranked      bool
 	Players     [2]string
 	CurrectTurn uint8
 	passed      bool

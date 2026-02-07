@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
+	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -139,9 +140,19 @@ func meHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	game, inGame := gogame.PlayerToGame[user.Username]
+
+	var gameID string
+	if inGame && game != nil {
+		gameID = game.ID
+	} else {
+		gameID = ""
+	}
+
 	resp := map[string]any{
-		"email":    user.Email,
-		"username": user.Username,
+		"email":          user.Email,
+		"username":       user.Username,
+		"isInGameWithID": gameID,
 	}
 
 	writeJSON(w, http.StatusOK, resp)

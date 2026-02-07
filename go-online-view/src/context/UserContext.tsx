@@ -1,9 +1,15 @@
 import { createContext } from "react";
 
 export type UserContextValue = {
-    user: { email: string; username: string } | null;
+    user: { email: string; username: string; isInGameWithID: string } | null;
     loading: boolean;
-    setUser: (user: { email: string; username: string } | null) => void;
+    setUser: (
+        user: {
+            email: string;
+            username: string;
+            isInGameWithID: string;
+        } | null,
+    ) => void;
 };
 
 export const UserContext = createContext<UserContextValue>({

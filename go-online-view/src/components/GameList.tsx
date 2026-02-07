@@ -132,9 +132,9 @@ const GameList: React.FC = () => {
     return (
         <div className="gamelist">
             <div className="gamelist-bar">
-                <div className="bar-left">
+                {/* <div className="bar-left">
                     <div className="title">Games</div>
-                </div>
+                </div> */}
 
                 <div className="bar-right">
                     <input
