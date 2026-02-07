@@ -78,28 +78,23 @@ func getHub(gameID string) *gameHub {
 	}
 	return h
 }
-
 func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 	gameID := chi.URLParam(r, "id")
+
 	game, exists := gogame.GameInstances[gameID]
 	if !exists {
 		http.Error(w, "game not found", http.StatusNotFound)
 		return
 	}
 
-	if game.Players[0] == "" || game.Players[1] == "" {
-		http.Error(w, "game not started yet", http.StatusForbidden)
+	if game.GameProgress == gogame.GAME_ENDED {
+		http.Error(w, "game ended", http.StatusGone)
 		return
 	}
 
 	username := ""
 	if user, err := middleware.GetUserInfo(r); err == nil {
 		username = user.Username
-	}
-
-	role := "spectator"
-	if username != "" && (username == game.Players[0] || username == game.Players[1]) {
-		role = "player"
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -109,13 +104,54 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 	defer conn.Close()
 
 	hub := getHub(gameID)
-	hub.add(&client{conn: conn, role: role, user: username})
+	c := &client{conn: conn, role: "spectator", user: username}
+	hub.add(c)
 	defer hub.remove(conn)
+
+	role := "spectator"
+	seat := "spectator"
+
+	if username != "" {
+		if username == game.Players[0] {
+			role = "player"
+			seat = "black"
+		} else if username == game.Players[1] {
+			role = "player"
+			seat = "white"
+		} else {
+			if game.GameProgress == gogame.GAME_WAITING_FOR_PLAYER &&
+				(game.Players[0] == "" || game.Players[1] == "") {
+
+				if err := game.Join(username); err == nil {
+					if username == game.Players[0] {
+						role = "player"
+						seat = "black"
+					} else if username == game.Players[1] {
+						role = "player"
+						seat = "white"
+					}
+
+					hub.broadcast(map[string]any{
+						"type": "sync",
+						"data": map[string]any{
+							"players": game.Players,
+							"turn":    game.CurrectTurn,
+							"board":   game.Board,
+							"moveNum": game.MoveNum,
+						},
+					})
+				}
+			}
+		}
+	}
+
+	c.role = role
 
 	_ = conn.WriteJSON(map[string]any{
 		"type": "hello",
 		"data": map[string]any{
 			"role": role,
+			"seat": seat, // "black"|"white"|"spectator"
 		},
 	})
 
@@ -151,8 +187,7 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			err := game.PlayMove(username, p.Row, p.Col)
-			if err != nil {
+			if err := game.PlayMove(username, p.Row, p.Col); err != nil {
 				_ = conn.WriteJSON(map[string]any{"type": "error", "data": err.Error()})
 				continue
 			}
@@ -180,11 +215,12 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 			})
 
 			hub.mu.Lock()
-			for conn := range hub.clients {
-				conn.Close()
+			for cconn := range hub.clients {
+				_ = cconn.Close()
 			}
 			hub.clients = make(map[*websocket.Conn]*client)
 			hub.mu.Unlock()
+
 			break
 		}
 	}

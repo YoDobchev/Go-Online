@@ -1,0 +1,142 @@
+// :root {
+//     --nav-h: 64px;
+// }
+
+// body {
+//     padding-top: var(--nav-h); // prevents content hiding behind fixed navbar
+// }
+
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-h);
+    z-index: 1000;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 1.5rem;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+    font-family: system-ui, sans-serif;
+
+    a {
+        text-decoration: none;
+        color: #222;
+        font-size: 0.95rem;
+
+        &:hover {
+            color: #666;
+        }
+    }
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+
+        img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+    }
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.auth {
+    display: flex; // login & register side-by-side
+    gap: 1rem;
+
+    .register {
+        font-weight: 600;
+    }
+}
+
+.loading {
+    font-size: 0.85rem;
+    color: #999;
+}
+
+// profile dropdown
+.profile-wrap {
+    position: relative;
+}
+
+.icon-btn {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+
+    background: transparent;
+    border: 1px solid #e6e6e6;
+    border-radius: 999px;
+    cursor: pointer;
+
+    &:hover {
+        background: #f7f7f7;
+    }
+
+    svg {
+        width: 18px;
+        height: 18px;
+        fill: #444;
+    }
+}
+
+.menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+
+    min-width: 160px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    overflow: hidden;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+}
+
+.menu-item {
+    width: 100%;
+    display: block;
+    text-align: left;
+
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+    color: #222;
+
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+
+    &:hover {
+        background: #f6f6f6;
+    }
+
+    &.danger {
+        color: #b00020;
+
+        &:hover {
+            background: #fff1f3;
+        }
+    }
+}

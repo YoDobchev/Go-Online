@@ -12,8 +12,19 @@ interface GameInfo {
     moveNum: number;
 }
 
+interface Status {
+    role: "player" | "spectator";
+    seat: "black" | "white" | "spectator";
+}
+
 type ServerMsg =
-    | { type: "hello"; data: { role: "player" | "spectator"; user: string } }
+    | {
+          type: "hello";
+          data: {
+              role: "player" | "spectator";
+              seat: "black" | "white" | "spectator";
+          };
+      }
     | { type: "sync"; data: GameInfo }
     | {
           type: "game_ended";
@@ -24,7 +35,7 @@ type ServerMsg =
 const Game: React.FC = () => {
     const { gameID } = useParams<{ gameID: string }>();
     const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
-    const [role, setRole] = useState<"player" | "spectator">("spectator");
+    const [status, setStatus] = useState<Status | null>(null);
 
     const [viewMoveNum, setViewMoveNum] = useState<number | null>(null);
     const [viewBoard, setViewBoard] = useState<Board | null>(null);
@@ -48,7 +59,7 @@ const Game: React.FC = () => {
             const msg = JSON.parse(ev.data) as ServerMsg;
 
             if (msg.type === "hello") {
-                setRole(msg.data.role);
+                setStatus(msg.data);
             } else if (msg.type === "sync") {
                 setGameInfo(msg.data);
             } else if (msg.type === "game_ended") {
@@ -121,18 +132,43 @@ const Game: React.FC = () => {
         setViewBoard(null);
     };
 
-    if (!gameInfo) return <div>Loading...</div>;
+    if (!gameInfo || !status) return <div>Loading...</div>;
 
     const maxMoveNum = gameInfo.moveNum ?? 0;
     const boardToShow = viewBoard ?? gameInfo.board;
     const isLive = viewMoveNum === null;
 
+    const opponentJoined = Boolean(gameInfo.players[1]);
+    const isLobbyWaiting = status.role === "player" && !opponentJoined;
+
+    const canPlay = status.role === "player" && isLive && opponentJoined;
+
     return (
         <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
             <div>
-                <div>Role: {role}</div>
-                {role === "spectator" && (
+                <div>Role: {status.role}</div>
+
+                {status.role === "spectator" && (
                     <div>You are spectating (read-only).</div>
+                )}
+
+                {isLobbyWaiting && (
+                    <div
+                        style={{
+                            margin: "8px 0",
+                            padding: "8px 10px",
+                            border: "1px solid #ddd",
+                            borderRadius: 6,
+                        }}
+                    >
+                        <div style={{ fontWeight: 600, color: "black"}}>
+                            Waiting for an opponent…
+                        </div>
+                        <div style={{ fontSize: 14 }}>
+                            You’re in the lobby as <b>{status.seat}</b>. Share
+                            the game link/ID to invite someone.
+                        </div>
+                    </div>
                 )}
 
                 <div>
@@ -153,13 +189,18 @@ const Game: React.FC = () => {
 
                 <GoBoardSVG
                     board={boardToShow}
-                    interactive={role === "player" && isLive}
+                    interactive={canPlay}
                     onPlay={(r, c) => sendMove(r, c)}
                 />
 
                 <button
                     onClick={sendPass}
-                    disabled={!isLive || role !== "player"}
+                    disabled={!canPlay} 
+                    title={
+                        isLobbyWaiting
+                            ? "Waiting for opponent to join"
+                            : undefined
+                    }
                 >
                     pass
                 </button>
