@@ -160,7 +160,7 @@ func (g *Game) Join(player string) error {
 func (g *Game) startClock() {
 	go func() {
 		timeFormat := clock.TimeFormat{
-			MainTime:       30 * time.Second,
+			MainTime:       300 * time.Second,
 			ByoYomi:        0,
 			ByoYomiPeriods: 0,
 		}

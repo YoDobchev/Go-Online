@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useContext } from "react";
 import { useParams } from "react-router-dom";
 import { API_BASE } from "../config";
 import GoBoardSVG from "../components/GoBoardSVG";
@@ -8,6 +8,7 @@ import PlayerClock from "../components/PlayerClock";
 import "../styles/Game.scss";
 import Navbar from "../components/Navbar";
 import BottomCenMsg from "../components/BottomCenMsg";
+import { UserContext } from "../context/UserContext";
 
 interface GameInfo {
     players: [string, string];
@@ -53,6 +54,8 @@ type ServerMsg =
     | { type: "clock_update"; data: ClockSnapshot };
 
 const Game: React.FC = () => {
+    const { user } = useContext(UserContext);
+
     const { gameID } = useParams<{ gameID: string }>();
     const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
     const [status, setStatus] = useState<Status | null>(null);
@@ -205,6 +208,19 @@ const Game: React.FC = () => {
         );
     };
 
+    const sendReport = async () => {
+        const res = await fetch(`${API_BASE}/reports`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: user?.username, game_id: gameID }),
+        });
+        if (!res.ok) {
+            setMsg("Failed to report game");
+            setShow(true);
+        }
+    };
+
     const getClockView = (player: number) => {
         const clock = clocks[player];
         if (!clock) {
@@ -341,7 +357,6 @@ const Game: React.FC = () => {
 
                     {gameEndedInfo && (
                         <div className="game-status__ended-notice">
-
                             <div>
                                 <strong className="player-black">
                                     {gameEndedInfo.players[0]}
@@ -356,8 +371,8 @@ const Game: React.FC = () => {
                             gameEndedInfo.reason === "timeout" ? (
                                 <span>
                                     {gameEndedInfo.winner === 1
-                                        ? "Black"
-                                        : "White"}{" "}
+                                        ? "White"
+                                        : "Black"}{" "}
                                     won by{" "}
                                     {gameEndedInfo.reason === "resignation"
                                         ? "resignation"
@@ -409,7 +424,7 @@ const Game: React.FC = () => {
 
                             <button
                                 className="btn btn--icon"
-                                onClick={() => sendResign()}
+                                onClick={() => sendReport()}
                                 title="Report"
                                 aria-label="Report"
                             >
