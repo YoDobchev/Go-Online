@@ -40,6 +40,8 @@ type Game struct {
 	Passed       bool  `gorm:"not null;default:false"`
 	GameProgress uint8 `gorm:"not null;default:0"`
 
+	GameEndedReason *string `gorm:"type:text"`
+
 	WhitePoints int `gorm:"not null;default:0"`
 	BlackPoints int `gorm:"not null;default:0"`
 
@@ -83,4 +85,17 @@ type Blog struct {
 	UpdatedAt   time.Time
 
 	AuthorName string `gorm:"type:text;not null"`
+}
+
+type Report struct {
+	ID int `gorm:"primaryKey"`
+
+	GameID string `gorm:"type:text;not null;index"`
+	Game   Game   `gorm:"foreignKey:GameID;references:ID;constraint:OnDelete:CASCADE;"`
+
+	UserID int  `gorm:"not null;index"`
+	User   User `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE;"`
+
+	Reason    string `gorm:"type:text;not null"`
+	CreatedAt time.Time
 }

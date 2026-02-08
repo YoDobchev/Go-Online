@@ -153,7 +153,7 @@ func (c *Clock) GetClockUpdate(player uint8) map[string]any {
 	return map[string]any{
 		"type": "clock_update",
 		"data": map[string]any{
-			"player":            c.current,
+			"player":            player,
 			"main_remaining_ms": main.Milliseconds(),
 			"byo_remaining_ms":  byoYomi.Milliseconds(),
 			"byo_periods_left":  byoYomiPeriods,

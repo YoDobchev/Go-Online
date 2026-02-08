@@ -44,10 +44,10 @@ type Game struct {
 	CurrectTurn uint8
 	passed      bool
 
-	GameProgress   uint8
-	WhitePoints    int
-	BlackPoints    int
-	EndedByTimeout bool
+	GameProgress    uint8
+	WhitePoints     int
+	BlackPoints     int
+	GameEndedReason string
 
 	done     chan struct{}
 	doneOnce sync.Once
@@ -191,18 +191,32 @@ func (g *Game) startClock() {
 
 				if g.Clock.OutOfTime(turn) {
 					g.mu.Lock()
-					g.EndedByTimeout = true
+					loser := turn
+					g.GameEndedReason = "timeout"
 					g.GameProgress = GAME_ENDED
-					g.end()
-					g.WinnerIndex = 1 - turn
+
+					if loser == Black {
+						g.WinnerIndex = 1 // white wins
+					} else {
+						g.WinnerIndex = 0 // black wins
+					}
 					g.mu.Unlock()
 
-					g.Events <- map[string]any{
-						"type": "timeout",
-						"data": map[string]any{
-							"loser": turn,
-						},
-					}
+					// g.Events <- map[string]any{
+					// 	"type": "game_ended",
+					// 	"data": map[string]any{
+					// 		"white_points": g.WhitePoints,
+					// 		"black_points": g.BlackPoints,
+					// 		"winner":       g.WinnerIndex,
+					// 		"reason":       g.GameEndedReason,
+					// 		"moveNum":      g.MoveNum,
+					// 	},
+					// }
+					g.emitGameEnded(g.MoveNum)
+
+					g.mu.Lock()
+					g.end()
+					g.mu.Unlock()
 
 					delete(PlayerToGame, g.Players[0])
 					delete(PlayerToGame, g.Players[1])
@@ -260,7 +274,7 @@ func (g *Game) Leave(player string) error {
 func (g *Game) PlayMove(player string, x, y int) error {
 	if (g.CurrectTurn == Black && player != g.Players[0]) ||
 		(g.CurrectTurn == White && player != g.Players[1]) {
-		return fmt.Errorf("not your turn")
+		return fmt.Errorf("Not your turn")
 	}
 
 	m := Move{
@@ -339,14 +353,54 @@ func (g *Game) ApplyMove(m Move) error {
 	return nil
 }
 
+func (g *Game) Resign(player string) error {
+	if (g.CurrectTurn == Black && player != g.Players[0]) ||
+		(g.CurrectTurn == White && player != g.Players[1]) {
+		return fmt.Errorf("Not your turn")
+	}
+
+	g.GameProgress = GAME_ENDED
+	g.GameEndedReason = "resignation"
+	if g.CurrectTurn == Black {
+		g.WinnerIndex = 1
+	}
+	if g.CurrectTurn == White {
+		g.WinnerIndex = 0
+	}
+	g.emitGameEnded(g.MoveNum)
+	g.end()
+
+	delete(PlayerToGame, g.Players[0])
+	delete(PlayerToGame, g.Players[1])
+	saveGameToDB(g)
+	return nil
+}
+
 func (g *Game) endGame() {
 	g.GameProgress = GAME_ENDED
 	g.WhitePoints, g.BlackPoints = getPointsFromBoard(g.Board)
-	g.end()
+	g.GameEndedReason = "normal"
 	if g.WhitePoints > g.BlackPoints {
 		g.WinnerIndex = 1
 	} else if g.BlackPoints > g.WhitePoints {
 		g.WinnerIndex = 0
+	}
+
+	g.emitGameEnded(g.MoveNum + 1)
+	g.end()
+}
+
+func (g *Game) emitGameEnded(moveNum int) {
+	g.Events <- map[string]any{
+		"type": "game_ended",
+		"data": map[string]any{
+			"players":      g.Players,
+			"white_points": g.WhitePoints,
+			"black_points": g.BlackPoints,
+			"winner":       g.WinnerIndex,
+			"reason":       g.GameEndedReason,
+			"moveNum":      moveNum,
+		},
 	}
 }
 

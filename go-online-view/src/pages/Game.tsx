@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { API_BASE } from "../config";
 import GoBoardSVG from "../components/GoBoardSVG";
@@ -6,6 +6,8 @@ import type { Board } from "../components/GoBoardSVG";
 import GameHistory from "../components/GameHistory";
 import PlayerClock from "../components/PlayerClock";
 import "../styles/Game.scss";
+import Navbar from "../components/Navbar";
+import BottomCenMsg from "../components/BottomCenMsg";
 
 interface GameInfo {
     players: [string, string];
@@ -38,11 +40,17 @@ type ServerMsg =
     | { type: "sync"; data: GameInfo }
     | {
           type: "game_ended";
-          data: { white_points: number; black_points: number; winner: number };
+          data: {
+              players: [string, string];
+              white_points: number;
+              black_points: number;
+              winner: number;
+              reason: string;
+              moveNum: number;
+          };
       }
     | { type: "error"; data: string }
-    | { type: "clock_update"; data: ClockSnapshot }
-    | { type: "timeout"; data: { loser: number } };
+    | { type: "clock_update"; data: ClockSnapshot };
 
 const Game: React.FC = () => {
     const { gameID } = useParams<{ gameID: string }>();
@@ -56,6 +64,38 @@ const Game: React.FC = () => {
     const [clockReceivedAt, setClockReceivedAt] = useState<number>(Date.now());
 
     const wsRef = useRef<WebSocket | null>(null);
+
+    const [show, setShow] = useState(false);
+    const [msg, setMsg] = useState("");
+    const handleCloseMsg = useCallback(() => setShow(false), []);
+
+    const [gameEndedInfo, setGameEndedInfo] = useState<{
+        players: [string, string];
+        white_points: number;
+        black_points: number;
+        winner: number;
+        reason: string;
+        moveNum: number;
+    } | null>(null);
+
+    const handleSelectMove = useCallback(
+        async (moveNum: number) => {
+            console.log("Selecting move", moveNum);
+            if (!gameID) throw new Error("No gameID");
+            setViewMoveNum(moveNum);
+            try {
+                const res = await fetch(
+                    `${API_BASE}/game/${gameID}/state?moveNum=${moveNum}`,
+                );
+                if (!res.ok) throw new Error(await res.text());
+                const b = (await res.json()) as Board;
+                setViewBoard(b);
+            } catch (e) {
+                console.error("Failed to load snapshot:", e);
+            }
+        },
+        [gameID],
+    );
 
     useEffect(() => {
         if (!gameID) return;
@@ -94,18 +134,19 @@ const Game: React.FC = () => {
                     },
                 }));
             } else if (msg.type === "game_ended") {
-                console.log(msg.type, msg.data);
-                console.log("gameended");
+                setGameEndedInfo(msg.data);
+                console.log("Game ended:", msg.data);
+                handleSelectMove(msg.data.moveNum);
             } else if (msg.type === "clock_update") {
                 setClocks((prev) => ({
                     ...prev,
                     [msg.data.player]: msg.data,
                 }));
                 setClockReceivedAt(Date.now());
-            } else if (msg.type === "timeout") {
-                console.log(`${msg.data.loser} ran out of time`);
             } else if (msg.type === "error") {
                 console.error("Server error:", msg.data);
+                setMsg(msg.data);
+                setShow(true);
             }
         };
 
@@ -120,7 +161,7 @@ const Game: React.FC = () => {
         return () => {
             ws.close();
         };
-    }, [gameID]);
+    }, [gameID, handleSelectMove]);
 
     useEffect(() => {
         const id = setInterval(() => {
@@ -153,24 +194,15 @@ const Game: React.FC = () => {
         );
     };
 
-    const fetchBoardAtMove = async (moveNum: number): Promise<Board> => {
-        const res = await fetch(
-            `${API_BASE}/game/${gameID}/state?moveNum=${moveNum}`,
+    const sendResign = () => {
+        const ws = wsRef.current;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+        ws.send(
+            JSON.stringify({
+                type: "play_resign",
+            }),
         );
-        if (!res.ok) throw new Error(await res.text());
-
-        const snap = (await res.json()) as Board;
-        return snap;
-    };
-
-    const handleSelectMove = async (moveNum: number) => {
-        setViewMoveNum(moveNum);
-        try {
-            const b = await fetchBoardAtMove(moveNum);
-            setViewBoard(b);
-        } catch (e) {
-            console.error("Failed to load snapshot:", e);
-        }
     };
 
     const getClockView = (player: number) => {
@@ -206,128 +238,218 @@ const Game: React.FC = () => {
         setViewBoard(null);
     };
 
-    if (!gameInfo || !status) return <div>Loading...</div>;
+    const defaultStatus = status ?? {
+        role: "spectator",
+        seat: "spectator",
+    };
 
-    const maxMoveNum = gameInfo.moveNum ?? 0;
-    const boardToShow = viewBoard ?? gameInfo.board;
+    if (!gameEndedInfo && !gameInfo) return <div>Loading game info...</div>;
+
+    // const makeEmptyBoard = (size = 19): Board => ({
+    //     size,
+    //     squares: Array.from({ length: size }, () =>
+    //         Array.from({ length: size }, () => 0),
+    //     ),
+    // });
+
+    // const safeGameInfo: GameInfo =
+    //     gameInfo ??
+    //     ({
+    //         players: ["", ""],
+    //         turn: 1,
+    //         board: makeEmptyBoard(19),
+    //         moveNum: 0,
+    //     } as GameInfo);
+
+    const maxMoveNum = gameEndedInfo?.moveNum ?? gameInfo?.moveNum ?? 0;
+    const boardToShow = viewBoard ?? gameInfo?.board;
     const isLive = viewMoveNum === null;
 
-    const opponentJoined = Boolean(gameInfo.players[1]);
-    const isLobbyWaiting = status.role === "player" && !opponentJoined;
+    const opponentJoined = Boolean(gameInfo?.players[1]);
+    const isLobbyWaiting = defaultStatus.role === "player" && !opponentJoined;
 
-    const canPlay = status.role === "player" && isLive && opponentJoined;
+    const canPlay =
+        !gameEndedInfo &&
+        defaultStatus.role === "player" &&
+        isLive &&
+        opponentJoined;
 
     return (
-        <div className="game-container">
-            <div className="game-left">
-                <div className="game-board-wrapper">
-                    <GoBoardSVG
-                        board={boardToShow}
-                        interactive={canPlay}
-                        onPlay={(r, c) => sendMove(r, c)}
-                    />
-                </div>
-            </div>
+        <>
+            <Navbar></Navbar>
 
-            <div className="game-right">
-                <div className="game-status">
-                    {status.role === "spectator" && (
-                        <div className="game-status__spectator-notice">
-                            You are spectating.
+            <div className="game-container">
+                <div className="game-left">
+                    <div className="game-board-wrapper">
+                        <GoBoardSVG
+                            board={boardToShow}
+                            interactive={canPlay}
+                            onPlay={(r, c) => sendMove(r, c)}
+                        />
+                    </div>
+                </div>
+
+                <div className="game-right">
+                    <div className="game-status">
+                        {defaultStatus.role === "spectator" &&
+                            !gameEndedInfo && (
+                                <div className="game-status__spectator-notice">
+                                    You are spectating.
+                                </div>
+                            )}
+                    </div>
+
+                    {isLobbyWaiting && (
+                        <div className="game-lobby-waiting">
+                            <div className="game-lobby-waiting__title">
+                                Waiting for an opponent…
+                            </div>
+                            <div className="game-lobby-waiting__message">
+                                You're in the lobby as{" "}
+                                <b>{defaultStatus.seat}</b>. Share the game
+                                link/ID to invite someone.
+                            </div>
                         </div>
                     )}
-                </div>
 
-                {isLobbyWaiting && (
-                    <div className="game-lobby-waiting">
-                        <div className="game-lobby-waiting__title">
-                            Waiting for an opponent…
+                    {gameInfo && !gameEndedInfo && (
+                        <>
+                            <div className="game-players">
+                                <strong className="player-black">
+                                    {gameInfo.players[0]}
+                                </strong>{" "}
+                                vs{" "}
+                                <strong className="player-white">
+                                    {gameInfo.players[1] || "(waiting)"}
+                                </strong>
+                            </div>
+
+                            <div className="game-clocks">
+                                <PlayerClock
+                                    label="⚫ Black"
+                                    active={gameInfo.turn === 2}
+                                    {...getClockView(2)}
+                                />
+                                <PlayerClock
+                                    label="⚪ White"
+                                    active={gameInfo.turn === 1}
+                                    {...getClockView(1)}
+                                />
+                            </div>
+                        </>
+                    )}
+
+                    {gameEndedInfo && (
+                        <div className="game-status__ended-notice">
+
+                            <div>
+                                <strong className="player-black">
+                                    {gameEndedInfo.players[0]}
+                                </strong>{" "}
+                                vs{" "}
+                                <strong className="player-white">
+                                    {gameEndedInfo.players[1]}
+                                </strong>
+                            </div>
+
+                            {gameEndedInfo.reason === "resignation" ||
+                            gameEndedInfo.reason === "timeout" ? (
+                                <span>
+                                    {gameEndedInfo.winner === 1
+                                        ? "Black"
+                                        : "White"}{" "}
+                                    won by{" "}
+                                    {gameEndedInfo.reason === "resignation"
+                                        ? "resignation"
+                                        : "timeout"}
+                                    .
+                                </span>
+                            ) : (
+                                <span>
+                                    Game ended. Black:{" "}
+                                    {gameEndedInfo.black_points} | White:{" "}
+                                    {gameEndedInfo.white_points}. Winner:{" "}
+                                    {gameEndedInfo.winner === 1
+                                        ? "Black"
+                                        : "White"}
+                                </span>
+                            )}
                         </div>
-                        <div className="game-lobby-waiting__message">
-                            You're in the lobby as <b>{status.seat}</b>. Share
-                            the game link/ID to invite someone.
+                    )}
+
+                    {defaultStatus.role === "player" && !gameEndedInfo && (
+                        <div className="game-controls">
+                            <div className="game-controls__left">
+                                <button
+                                    onClick={sendPass}
+                                    disabled={!canPlay}
+                                    title={
+                                        isLobbyWaiting
+                                            ? "Waiting for opponent to join"
+                                            : undefined
+                                    }
+                                    className="btn btn--primary"
+                                >
+                                    Pass
+                                </button>
+
+                                <button
+                                    onClick={() => sendResign()}
+                                    disabled={!canPlay}
+                                    className="btn btn--danger"
+                                    title={
+                                        !canPlay
+                                            ? "You can only resign on your turn"
+                                            : undefined
+                                    }
+                                >
+                                    Resign
+                                </button>
+                            </div>
+
+                            <button
+                                className="btn btn--icon"
+                                onClick={() => sendResign()}
+                                title="Report"
+                                aria-label="Report"
+                            >
+                                <span className="flag" aria-hidden="true">
+                                    🚩
+                                </span>
+                            </button>
                         </div>
+                    )}
+
+                    {!isLive && !gameEndedInfo && (
+                        <div className="game-history-notice">
+                            <span className="game-history-notice__text">
+                                Viewing History!
+                            </span>
+                            <button onClick={backToLive} className="btlbtn">
+                                Back to Live
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="game-sidebar">
+                        <GameHistory
+                            maxMoveNum={maxMoveNum}
+                            selectedMoveNum={viewMoveNum}
+                            onSelect={handleSelectMove}
+                        />
                     </div>
-                )}
-
-                <div className="game-players">
-                    <strong className="player-black">{gameInfo.players[0]}</strong> vs{" "}
-                    <strong className="player-white">{gameInfo.players[1] || "(waiting)"}</strong>
-                </div>
-
-              
-
-                <div className="game-clocks">
-                    <PlayerClock
-                        label="⚫ Black"
-                        active={gameInfo.turn === 2}
-                        {...getClockView(2)}
-                    />
-                    <PlayerClock
-                        label="⚪ White"
-                        active={gameInfo.turn === 1}
-                        {...getClockView(1)}
-                    />
-                </div>
-                <div className="game-controls">
-                    <div className="game-controls__left">
-                        <button
-                            onClick={sendPass}
-                            disabled={!canPlay}
-                            title={
-                                isLobbyWaiting
-                                    ? "Waiting for opponent to join"
-                                    : undefined
-                            }
-                            className="btn btn--primary"
-                        >
-                            Pass
-                        </button>
-
-                        <button
-                            onClick={() => console.log("resign")}
-                            disabled={!canPlay}
-                            className="btn btn--danger"
-                            title={
-                                !canPlay
-                                    ? "You can only resign on your turn"
-                                    : undefined
-                            }
-                        >
-                            Resign
-                        </button>
-                    </div>
-
-                    <button
-                        className="btn btn--icon"
-                        onClick={() => console.log("report")}
-                        title="Report"
-                        aria-label="Report"
-                    >
-                        <span className="flag" aria-hidden="true">
-                            🚩
-                        </span>
-                    </button>
-                </div>
-
-                  {!isLive && (
-                    <div className="game-history-notice">
-                        <span className="game-history-notice__text">
-                            Viewing History!
-                        </span>
-                        <button onClick={backToLive} className="btlbtn">Back to Live</button>
-                    </div>
-                )}
-
-                <div className="game-sidebar">
-                    <GameHistory
-                        maxMoveNum={maxMoveNum}
-                        selectedMoveNum={viewMoveNum}
-                        onSelect={handleSelectMove}
-                    />
                 </div>
             </div>
-        </div>
+
+            <BottomCenMsg
+                visible={show}
+                message={msg}
+                backgroundColor="#e90e0e"
+                textColor="#f7f7f7"
+                timeAfterFadeMs={1000}
+                onClose={handleCloseMsg}
+            />
+        </>
     );
 };
 
