@@ -183,6 +183,43 @@ func saveGameToDB(g *Game) error {
 	return database.DB.Save(&dbGame).Error
 }
 
+func updateElo(g *Game) error {
+	if database.DB == nil {
+		return nil
+	}
+
+	winnerName := g.Players[g.WinnerIndex]
+	loserName := g.Players[1-g.WinnerIndex]
+
+	winner, err := loadUserFromDB(winnerName)
+	if err != nil {
+		return err
+	}
+
+	loser, err := loadUserFromDB(loserName)
+	if err != nil {
+		return err
+	}
+
+	winnerElo, loserElo := elo.CalculateElo(winner.Elo, loser.Elo, 1)
+	winner.Elo, loser.Elo = winnerElo, loserElo
+
+	if err := database.DB.Save(winner).Error; err != nil {
+		return err
+	}
+	if err := database.DB.Save(loser).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func loadUserFromDB(username string) (*database.User, error) {
+	var user database.User
+	err := database.DB.Where("username = ?", username).First(&user).Error
+	return &user, err
+}
+
 func saveSnapshotIfNeededToDB(g *Game) error {
 	if database.DB == nil {
 		return nil

@@ -385,9 +385,9 @@ func (g *Game) endGame() {
 	} else if g.BlackPoints > g.WhitePoints {
 		g.WinnerIndex = 0
 	}
-
 	g.emitGameEnded(g.MoveNum + 1)
 	g.end()
+	updateElo(g)
 }
 
 func (g *Game) emitGameEnded(moveNum int) {
