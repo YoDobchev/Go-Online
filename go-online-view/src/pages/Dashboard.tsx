@@ -1,47 +1,46 @@
-import { useContext, useEffect } from "react";
+import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import "../styles/Dashboard.scss";
+import Navbar from "../components/Navbar";
 
 export default function Dashboard() {
-  const { user } = useContext(UserContext);
-  const navigate = useNavigate();
+    const { user } = useContext(UserContext);
+    const navigate = useNavigate();
 
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> Stashed changes
-  useEffect(() => {
-    if (!user) {
-      navigate("/", { replace: true });
-      return;
+    const isModerator =
+        !!user && (user.role === "admin" || user.role === "moderator");
+
+    if (!isModerator) {
+        return (
+            <>
+                <Navbar />
+                <div className="reports-denied">
+                    <h1 className="reports-denied__title">Access Denied</h1>
+                    <p className="reports-denied__text">
+                        You do not have permission to view this page.
+                    </p>
+                </div>
+            </>
+        );
     }
 
-    if (user.role !== "admin" && user.role !== "moderator") {
-      navigate("/", { replace: true });
-    }
-  }, [user, navigate]);
+    return (
+        <>
+            <Navbar />
+            <div className="dashboard">
+                <h1>Admin Dashboard</h1>
 
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-  if (!user) return null;
+                <div className="dashboard-actions">
+                    <button onClick={() => navigate("/dashboard/users")}>
+                        Users
+                    </button>
 
-  return (
-    <div className="dashboard">
-      <h1>Admin Dashboard</h1>
-
-      <div className="dashboard-actions">
-        <button onClick={() => navigate("/dashboard/users")}>
-          Users
-        </button>
-
-        <button onClick={() => navigate("/dashboard/reports")}>
-          Reports
-        </button>
-      </div>
-    </div>
-  );
+                    <button onClick={() => navigate("/dashboard/reports")}>
+                        Reports
+                    </button>
+                </div>
+            </div>
+        </>
+    );
 }

@@ -39,7 +39,14 @@ export default function BlogsList() {
                 if (!res.ok) throw new Error("Failed to load blogs");
                 return res.json();
             })
-            .then(setBlogs)
+            .then((data) => {
+                const list = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data?.blogs)
+                      ? data.blogs
+                      : [];
+                setBlogs(list);
+            })
             .catch((err) => setError(err.message))
             .finally(() => setLoading(false));
     }, []);
@@ -68,9 +75,7 @@ export default function BlogsList() {
         });
     }, [blogs, titleFilter, authorFilter, fromDate, toDate]);
 
-    const authors = Array.from(
-        new Set(blogs.map((b) => b.author_name))
-    );
+    const authors = Array.from(new Set(blogs.map((b) => b.author_name)));
 
     return (
         <div className="bloglist">
@@ -108,10 +113,12 @@ export default function BlogsList() {
                         onChange={(e) => setToDate(e.target.value)}
                     />
 
-                    <button className="plus"
+                    <button
+                        className="plus"
                         onClick={() => setCreateOpen(true)}
                         aria-label="Create blog"
-                        title="Create blog">
+                        title="Create blog"
+                    >
                         <span>+</span>
                     </button>
                 </div>
@@ -138,17 +145,25 @@ export default function BlogsList() {
                         <div key={blog.id} className="blogrow">
                             <a
                                 href={`/blogs/${blog.id}`}
-                                style={{ display: "contents", color: "inherit", textDecoration: "none" }}
+                                style={{
+                                    display: "contents",
+                                    color: "inherit",
+                                    textDecoration: "none",
+                                }}
                             >
                                 <div className="cell muted">{blog.id}</div>
                                 <div className="cell">{blog.title}</div>
                                 <div className="cell">{blog.author_name}</div>
                                 <div className="cell">
-                                    {new Date(blog.published_at).toISOString().slice(0, 10)}
+                                    {new Date(blog.published_at)
+                                        .toISOString()
+                                        .slice(0, 10)}
                                 </div>
                                 <div className="cell muted">
                                     {blog.updated_at
-                                        ? new Date(blog.updated_at).toISOString().slice(0, 10)
+                                        ? new Date(blog.updated_at)
+                                              .toISOString()
+                                              .slice(0, 10)
                                         : "-"}
                                 </div>
                             </a>
@@ -164,15 +179,13 @@ export default function BlogsList() {
             />
 
             <BottomCenMsg
-                            visible={show}
-                            message={msg}
-                            backgroundColor="#e90e0e"
-                            textColor="#f7f7f7"
-                            timeAfterFadeMs={2000}
-                            onClose={() => setShow(false)}
-                        />
+                visible={show}
+                message={msg}
+                backgroundColor="#e90e0e"
+                textColor="#f7f7f7"
+                timeAfterFadeMs={2000}
+                onClose={() => setShow(false)}
+            />
         </div>
-
-        
     );
 }

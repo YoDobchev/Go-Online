@@ -15,7 +15,7 @@ type User = {
 type ProfileProps = {
     user: User | null;
     loading?: boolean;
-    canBan?: boolean
+    canBan?: boolean;
 };
 
 const User: React.FC<ProfileProps> = ({
@@ -23,7 +23,6 @@ const User: React.FC<ProfileProps> = ({
     loading = false,
     canBan = false,
 }) => {
-
     const [show, setShow] = useState(false);
     const [msg, setMsg] = useState("");
     const handleCloseMsg = useCallback(() => setShow(false), []);
@@ -31,7 +30,7 @@ const User: React.FC<ProfileProps> = ({
         if (!user) return;
         try {
             await fetch(`/api/users/${user.username}`, {
-                method: 'DELETE',
+                method: "DELETE",
             });
         } catch {
             setMsg("Failed to ban user");
@@ -67,7 +66,11 @@ const User: React.FC<ProfileProps> = ({
                     <p>Rank: {user.rank}</p>
                     <p>Role: {user.role}</p>
 
-                    {canBan && <button className="banbtn" onClick={handleBan}>BAN</button>}
+                    {canBan && (
+                        <button className="banbtn" onClick={handleBan}>
+                            BAN
+                        </button>
+                    )}
                 </div>
 
                 <div className="vertical"></div>
@@ -78,7 +81,7 @@ const User: React.FC<ProfileProps> = ({
                 </div>
             </div>
 
-              <BottomCenMsg
+            <BottomCenMsg
                 visible={show}
                 message={msg}
                 backgroundColor="#e90e0e"
@@ -86,7 +89,6 @@ const User: React.FC<ProfileProps> = ({
                 timeAfterFadeMs={1000}
                 onClose={handleCloseMsg}
             />
-
         </div>
     );
 };

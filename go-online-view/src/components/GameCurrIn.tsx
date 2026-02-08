@@ -2,7 +2,6 @@ import { useContext } from "react";
 import { UserContext } from "../context/UserContext";
 import "../styles/GameCurrIn.scss";
 
-
 const GameCurrIn: React.FC = () => {
     const { user, loading } = useContext(UserContext);
 
