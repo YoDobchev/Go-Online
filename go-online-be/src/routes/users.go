@@ -18,6 +18,7 @@ func UsersRoutes() *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsModerator)
+		r.Get("/", getAllUsersHandler)
 		r.Get("/{username}", getUserHandler)
 		r.Get("/", getAllUsersHandler)
 		r.Delete("/{username}", deleteUserHandler)

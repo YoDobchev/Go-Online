@@ -7,6 +7,20 @@ export default function Dashboard() {
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
 
+<<<<<<< Updated upstream
+=======
+  useEffect(() => {
+    if (!user) {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    if (user.role !== "admin" && user.role !== "moderator") {
+      navigate("/", { replace: true });
+    }
+  }, [user, navigate]);
+
+>>>>>>> Stashed changes
   if (!user) return null;
 
   return (
