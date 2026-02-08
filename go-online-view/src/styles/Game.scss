@@ -152,3 +152,64 @@
 //     text-decoration: underline;
 //     text-decoration-color: #e5e3e3;
 // }
+
+.winprob {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.winprob__header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.winprob__title {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.winprob__nums {
+    display: flex;
+    gap: 10px;
+    font-size: 0.9rem;
+}
+
+.winprob__num--black {
+    color: #111;
+}
+.winprob__num--white {
+    color: #666;
+}
+
+.winprob__bar {
+    position: relative;
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+    display: flex;
+}
+
+.winprob__seg {
+    height: 100%;
+}
+
+.winprob__seg--black {
+    background: #111;
+}
+
+.winprob__seg--white {
+    background: #f7f7f7;
+}
+
+.winprob__mid {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(0, 0, 0, 0.12);
+}

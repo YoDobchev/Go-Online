@@ -1,1 +1,5 @@
 .idea
+analysis_logs/
+gtp_logs/
+*.zip
+print.sh

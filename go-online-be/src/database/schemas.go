@@ -60,7 +60,9 @@ type GameMove struct {
 	X             int   // -1=pass
 	Y             int
 	ResultingHash int64 `gorm:"not null"`
-	CreatedAt     time.Time
+
+	BlackWinProb float32 `gorm:"not null;default:0"`
+	CreatedAt    time.Time
 }
 
 type GameSnapshot struct {

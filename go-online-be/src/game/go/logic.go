@@ -1,13 +1,16 @@
 package gogame
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
 	"time"
 
+	"github.com/YoDobchev/Go-Online/src/database"
 	clock "github.com/YoDobchev/Go-Online/src/game/clock"
+	"github.com/YoDobchev/Go-Online/src/katago"
 )
 
 type Move struct {
@@ -202,16 +205,6 @@ func (g *Game) startClock() {
 					}
 					g.mu.Unlock()
 
-					// g.Events <- map[string]any{
-					// 	"type": "game_ended",
-					// 	"data": map[string]any{
-					// 		"white_points": g.WhitePoints,
-					// 		"black_points": g.BlackPoints,
-					// 		"winner":       g.WinnerIndex,
-					// 		"reason":       g.GameEndedReason,
-					// 		"moveNum":      g.MoveNum,
-					// 	},
-					// }
 					g.emitGameEnded(g.MoveNum)
 
 					g.mu.Lock()
@@ -290,9 +283,13 @@ func (g *Game) PlayMove(player string, x, y int) error {
 
 	g.MoveNum++
 	g.MovePlayed <- struct{}{}
+	if err := saveMoveToDB(g, m); err != nil {
+		return err
+	}
+
+	go analyzeAndStore(katago.Eng, g.ID, g.MoveNum, g.Board.Size, g.Komi)
 
 	saveGameToDB(g)
-	saveMoveToDB(g, m)
 	saveSnapshotIfNeededToDB(g)
 
 	return nil
@@ -351,6 +348,50 @@ func (g *Game) ApplyMove(m Move) error {
 	g.seen[g.hash] = struct{}{}
 
 	return nil
+}
+
+func analyzeAndStore(engine *katago.Engine, gameID string, moveNo int, boardSize int, komi float32) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	var dbMoves []database.GameMove
+	err := database.DB.
+		Where("game_id = ? AND move_no <= ?", gameID, moveNo).
+		Order("move_no ASC").
+		Find(&dbMoves).Error
+	if err != nil {
+		return
+	}
+
+	moves := make([][2]string, 0, len(dbMoves))
+	for _, m := range dbMoves {
+		mv := "pass"
+		if m.X != -1 {
+			mv = katago.GTPCoord(m.X, m.Y, boardSize)
+		}
+		moves = append(moves, [2]string{katago.BW(m.Color), mv})
+	}
+
+	q := katago.Query{
+		ID:         fmt.Sprintf("%s-%d", gameID, moveNo),
+		BoardXSize: boardSize,
+		BoardYSize: boardSize,
+		Rules:      "tromp-taylor",
+		Komi:       komi,
+		Moves:      moves,
+		MaxVisits:  64,
+	}
+
+	resp, err := engine.Analyze(ctx, q)
+	if err != nil {
+		return
+	}
+
+	blackProb := float32(katago.BlackWinProb(resp))
+
+	_ = database.DB.Model(&database.GameMove{}).
+		Where("game_id = ? AND move_no = ?", gameID, moveNo).
+		Update("black_win_prob", blackProb).Error
 }
 
 func (g *Game) Resign(player string) error {

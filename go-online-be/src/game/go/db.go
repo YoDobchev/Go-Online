@@ -49,7 +49,7 @@ func LoadGamesFromDB() {
 			GameProgress:    dbGame.GameProgress,
 			WhitePoints:     dbGame.WhitePoints,
 			BlackPoints:     dbGame.BlackPoints,
-			MoveNum:         dbGame.MoveNo + 1,
+			MoveNum:         dbGame.MoveNo,
 			hash:            uint64(dbGame.CurrentHash),
 			chains:          NewChainsMap(board),
 			zobrist:         NewZobristTable(board.Size),
