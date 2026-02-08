@@ -1,0 +1,66 @@
+.game-history {
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.game-history__title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  margin-bottom: 10px;
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.game-history__grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-history__btn {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.16);
+  background: rgba(0, 0, 0, 0.02);
+  color: rgba(0, 0, 0, 0.86);
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    transform 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.22);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(116, 157, 44, 0.25);
+    border-color: rgba(116, 157, 44, 0.7);
+  }
+
+  &.is-selected {
+    background: rgba(116, 157, 44, 0.16);
+    border-color: rgba(116, 157, 44, 0.75);
+    color: rgba(0, 0, 0, 0.92);
+    font-weight: 700;
+
+    &:hover {
+      background: rgba(116, 157, 44, 0.22);
+    }
+  }
+}

@@ -1,3 +1,4 @@
+import "../styles/GameHistory.scss";
 export default function GameHistory({
     maxMoveNum,
     selectedMoveNum,
@@ -10,10 +11,10 @@ export default function GameHistory({
     const moves = Array.from({ length: maxMoveNum + 1 }, (_, i) => i);
 
     return (
-        <div style={{ border: "1px solid #ddd", padding: 8, borderRadius: 8 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>History</div>
+        <div className="game-history">
+            <div className="game-history__title">History</div>
 
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            <div className="game-history__grid">
                 {moves.map((mn) => {
                     const isSelected = selectedMoveNum === mn;
                     const label =
@@ -25,14 +26,8 @@ export default function GameHistory({
                         <button
                             key={mn}
                             onClick={() => onSelect(mn)}
-                            style={{
-                                padding: "4px 8px",
-                                borderRadius: 6,
-                                border: "1px solid #ccc",
-                                background: isSelected ? "#9d2c2c" : "#fff",
-                                color: "#000000",
-                                cursor: "pointer",
-                            }}
+                            className={`game-history__btn ${isSelected ? "is-selected" : ""}`}
+                            type="button"
                         >
                             {label}
                         </button>

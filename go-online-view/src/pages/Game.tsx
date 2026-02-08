@@ -5,6 +5,7 @@ import GoBoardSVG from "../components/GoBoardSVG";
 import type { Board } from "../components/GoBoardSVG";
 import GameHistory from "../components/GameHistory";
 import PlayerClock from "../components/PlayerClock";
+import "../styles/Game.scss";
 
 interface GameInfo {
     players: [string, string];
@@ -28,17 +29,17 @@ interface ClockSnapshot {
 
 type ServerMsg =
     | {
-        type: "hello";
-        data: {
-            role: "player" | "spectator";
-            seat: "black" | "white" | "spectator";
-        };
-    }
+          type: "hello";
+          data: {
+              role: "player" | "spectator";
+              seat: "black" | "white" | "spectator";
+          };
+      }
     | { type: "sync"; data: GameInfo }
     | {
-        type: "game_ended";
-        data: { white_points: number; black_points: number; winner: number };
-    }
+          type: "game_ended";
+          data: { white_points: number; black_points: number; winner: number };
+      }
     | { type: "error"; data: string }
     | { type: "clock_update"; data: ClockSnapshot }
     | { type: "timeout"; data: { loser: number } };
@@ -200,13 +201,6 @@ const Game: React.FC = () => {
         };
     };
 
-    const formatTime = (ms: number) => {
-        const totalSeconds = Math.ceil(ms / 1000);
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    };
-
     const backToLive = () => {
         setViewMoveNum(null);
         setViewBoard(null);
@@ -224,50 +218,46 @@ const Game: React.FC = () => {
     const canPlay = status.role === "player" && isLive && opponentJoined;
 
     return (
-        <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-            <div>
-                <div>Role: {status.role}</div>
+        <div className="game-container">
+            <div className="game-left">
+                <div className="game-board-wrapper">
+                    <GoBoardSVG
+                        board={boardToShow}
+                        interactive={canPlay}
+                        onPlay={(r, c) => sendMove(r, c)}
+                    />
+                </div>
+            </div>
 
-                {status.role === "spectator" && (
-                    <div>You are spectating (read-only).</div>
-                )}
+            <div className="game-right">
+                <div className="game-status">
+                    {status.role === "spectator" && (
+                        <div className="game-status__spectator-notice">
+                            You are spectating.
+                        </div>
+                    )}
+                </div>
 
                 {isLobbyWaiting && (
-                    <div
-                        style={{
-                            margin: "8px 0",
-                            padding: "8px 10px",
-                            border: "1px solid #ddd",
-                            borderRadius: 6,
-                        }}
-                    >
-                        <div style={{ fontWeight: 600, color: "black" }}>
+                    <div className="game-lobby-waiting">
+                        <div className="game-lobby-waiting__title">
                             Waiting for an opponent…
                         </div>
-                        <div style={{ fontSize: 14 }}>
-                            You’re in the lobby as <b>{status.seat}</b>. Share
+                        <div className="game-lobby-waiting__message">
+                            You're in the lobby as <b>{status.seat}</b>. Share
                             the game link/ID to invite someone.
                         </div>
                     </div>
                 )}
 
-                <div>
-                    Players: {gameInfo.players[0]} vs{" "}
-                    {gameInfo.players[1] || "(waiting)"}
+                <div className="game-players">
+                    <strong className="player-black">{gameInfo.players[0]}</strong> vs{" "}
+                    <strong className="player-white">{gameInfo.players[1] || "(waiting)"}</strong>
                 </div>
 
-                <div>Turn: {gameInfo.turn}</div>
+              
 
-                {!isLive && (
-                    <div style={{ margin: "8px 0" }}>
-                        Viewing move: <b>{viewMoveNum}</b>{" "}
-                        <button onClick={backToLive} style={{ marginLeft: 8 }}>
-                            Live
-                        </button>
-                    </div>
-                )}
-
-                <div style={{ marginBottom: 12 }}>
+                <div className="game-clocks">
                     <PlayerClock
                         label="⚫ Black"
                         active={gameInfo.turn === 2}
@@ -279,32 +269,63 @@ const Game: React.FC = () => {
                         {...getClockView(1)}
                     />
                 </div>
+                <div className="game-controls">
+                    <div className="game-controls__left">
+                        <button
+                            onClick={sendPass}
+                            disabled={!canPlay}
+                            title={
+                                isLobbyWaiting
+                                    ? "Waiting for opponent to join"
+                                    : undefined
+                            }
+                            className="btn btn--primary"
+                        >
+                            Pass
+                        </button>
 
-                <GoBoardSVG
-                    board={boardToShow}
-                    interactive={canPlay}
-                    onPlay={(r, c) => sendMove(r, c)}
-                />
+                        <button
+                            onClick={() => console.log("resign")}
+                            disabled={!canPlay}
+                            className="btn btn--danger"
+                            title={
+                                !canPlay
+                                    ? "You can only resign on your turn"
+                                    : undefined
+                            }
+                        >
+                            Resign
+                        </button>
+                    </div>
 
-                <button
-                    onClick={sendPass}
-                    disabled={!canPlay}
-                    title={
-                        isLobbyWaiting
-                            ? "Waiting for opponent to join"
-                            : undefined
-                    }
-                >
-                    pass
-                </button>
-            </div>
+                    <button
+                        className="btn btn--icon"
+                        onClick={() => console.log("report")}
+                        title="Report"
+                        aria-label="Report"
+                    >
+                        <span className="flag" aria-hidden="true">
+                            🚩
+                        </span>
+                    </button>
+                </div>
 
-            <div style={{ minWidth: 220 }}>
-                <GameHistory
-                    maxMoveNum={maxMoveNum}
-                    selectedMoveNum={viewMoveNum}
-                    onSelect={handleSelectMove}
-                />
+                  {!isLive && (
+                    <div className="game-history-notice">
+                        <span className="game-history-notice__text">
+                            Viewing History!
+                        </span>
+                        <button onClick={backToLive} className="btlbtn">Back to Live</button>
+                    </div>
+                )}
+
+                <div className="game-sidebar">
+                    <GameHistory
+                        maxMoveNum={maxMoveNum}
+                        selectedMoveNum={viewMoveNum}
+                        onSelect={handleSelectMove}
+                    />
+                </div>
             </div>
         </div>
     );

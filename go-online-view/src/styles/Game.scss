@@ -1,0 +1,154 @@
+:root {
+    height: 100%;
+}
+
+.game-container {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    gap: 24px;
+    align-items: start;
+    padding: 16px;
+}
+
+.game-left {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.game-board-wrapper {
+    width: 100%;
+    max-width: calc(100vh - 140px);
+    aspect-ratio: 1 / 1;
+    max-height: calc(100vh - 140px);
+    margin: 0 auto;
+}
+
+.game-board-wrapper svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.game-right {
+    flex: 0 0 260px;
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.game-right {
+    position: sticky;
+    top: 16px;
+}
+
+@media (max-width: 900px) {
+    .game-container {
+        flex-direction: column;
+    }
+    .game-right {
+        position: static;
+        width: 100%;
+        flex: 1 1 auto;
+    }
+    .game-board-wrapper {
+        max-height: none;
+        max-width: 100%;
+    }
+}
+
+.game-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.game-controls__left {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn--primary {
+    border-color: #b3dff1;
+}
+
+.btn--danger {
+    background: #fff5f5;
+    border-color: #f1b3b3;
+}
+
+.btn--icon {
+    width: 42px;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.flag {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.game-history-notice {
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #b3dff1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.btlbtn {
+    padding: 5px 7px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+}
+
+.game-status__spectator-notice {
+    padding: 8px;
+    border-radius: 10px;
+    background-color: #fff5f5;
+    color: #b00020;
+    font-size: 0.9rem;
+    text-align: center;
+}
+.game-players {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+// .player-black {
+//     text-decoration: underline;
+//     text-decoration-color: #111111;
+// }
+// .player-white {
+//     text-decoration: underline;
+//     text-decoration-color: #e5e3e3;
+// }
