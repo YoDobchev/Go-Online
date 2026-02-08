@@ -2,7 +2,6 @@ package routes
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
@@ -14,23 +13,16 @@ func ReportRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(middleware.IsLoggedIn)
-	r.Get("/", getReportsHandler)
 	r.Post("/", postReportHandler)
-	r.Delete("/{reportId}", deleteReportHandler)
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.IsModerator)
+		r.Get("/", getReportsHandler)
+		r.Delete("/{reportId}", deleteReportHandler)
+	})
 	return r
 }
 
 func getReportsHandler(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromCtx(r)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if user.Role != "admin" && user.Role != "moderator" {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-
 	reports, err := gogame.LoadAllReportsFromDB()
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
@@ -51,8 +43,6 @@ func postReportHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(req.GameID)
-
 	if err := gogame.SaveReportToDB(req.GameID, req.FromUsername); err != nil {
 		http.Error(w, "could not save report", http.StatusInternalServerError)
 		return
@@ -62,16 +52,6 @@ func postReportHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteReportHandler(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromCtx(r)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if user.Role != "admin" && user.Role != "moderator" {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-
 	reportId := chi.URLParam(r, "reportId")
 	if err := gogame.DeleteReportFromDB(reportId); err != nil {
 		http.Error(w, "could not delete report", http.StatusInternalServerError)

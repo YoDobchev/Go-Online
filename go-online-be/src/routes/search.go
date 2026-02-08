@@ -87,7 +87,7 @@ func searchGamesHandler(w http.ResponseWriter, r *http.Request) {
 
 	if q != "" {
 		like := "%" + q + "%"
-		db = db.Where("(player_black ILIKE ? OR player_white ILIKE ?)", like, like, like)
+		db = db.Where("(player_black ILIKE ? OR player_white ILIKE ?)", like, like)
 	}
 
 	if sizeStr != "" {

@@ -13,6 +13,7 @@ import Leaderboard from "./pages/Leaderboard";
 import BlogContent from "./pages/BlogContent";
 import About from "./pages/About";
 import Reports from "./pages/Reports";
+import UserPage from "./pages/UserPage";
 
 import "./styles/index.scss";
 
@@ -34,6 +35,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/about" element = {<About />}/>
                 <Route path="/reports" element={<Reports />} />
+                <Route path="/users/:username" element={<UserPage />} />
 
             </Routes>
         </AppProviders>

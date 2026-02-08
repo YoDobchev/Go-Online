@@ -32,6 +32,7 @@ func New() *chi.Mux {
 	r.Mount("/api/blogs", BlogsRoutes())
 	r.Mount("/api/reports", ReportRoutes())
 	r.Mount("/api/leaderboard", LeaderboardRoutes())
+	r.Mount("/api/users", UsersRoutes())
 
 	return r
 }
