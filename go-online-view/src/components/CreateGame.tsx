@@ -16,7 +16,6 @@ function parsePlayAs(v: string): PlayAs {
 function parseSeconds(v: string, fallback: number): number {
     const n = Math.floor(Number(v));
     if (!Number.isFinite(n)) return fallback;
-    // clamp to something sensible
     return Math.min(Math.max(n, 1), 24 * 60 * 60);
 }
 
@@ -30,7 +29,6 @@ type Props = {
     defaultSize?: CreateSize;
     defaultRanked?: boolean;
 
-    // NEW
     defaultTimeSeconds?: number;
 };
 
