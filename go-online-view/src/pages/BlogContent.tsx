@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/BlogContent.scss";
+import BottomCenMsg from "../components/BottomCenMsg";
 
 type Blog = {
   id: number;
@@ -30,11 +31,16 @@ export default function BlogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [show, setShow] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const triggerErrMsg = (text: string) => {
+    setMsg(text);
+    setShow(true);
+  };
+
   const deleteReply = async (replyId: number) => {
     if (!id) return;
-
-    const confirmed = window.confirm("Delete this reply?");
-    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/blogs/${id}/replies`, {
@@ -52,8 +58,8 @@ export default function BlogContent() {
 
       setReplies((prev) => prev.filter((r) => r.id !== replyId));
     } catch (err) {
-      alert("Could not delete reply");
       console.error(err);
+      triggerErrMsg("Could not delete reply");
     }
   };
 
@@ -137,6 +143,14 @@ export default function BlogContent() {
           ))}
         </div>
       )}
+      <BottomCenMsg
+        visible={show}
+        message={msg}
+        backgroundColor="#e90e0e"
+        textColor="#f7f7f7"
+        timeAfterFadeMs={2000}
+        onClose={() => setShow(false)}
+      />
     </div>
   );
 }
