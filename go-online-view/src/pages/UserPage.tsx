@@ -21,7 +21,8 @@ const UserPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const isModerator = !!me && (me.role === "admin" || me.role === "moderator");
+    const isModerator =
+        !!me && (me.role === "admin" || me.role === "moderator");
 
     useEffect(() => {
         if (!isModerator) return;
@@ -106,7 +107,11 @@ const UserPage: React.FC = () => {
         );
     }
 
-    return <User user={target} loading={loading} />;
+    return (
+        <>
+            <User user={target} loading={loading} canBan={true}/>;
+        </>
+    );
 };
 
 export default UserPage;
