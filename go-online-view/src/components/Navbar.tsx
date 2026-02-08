@@ -47,48 +47,57 @@ const Navbar: React.FC = () => {
                 <a href="/leaderboard">LeaderBoard</a>
                 <a href="/about">About</a>
 
+                {user &&
+                    (user.role === "admin" || user.role === "moderator") && (
+                        <>
+                            <a href="/reports">Reports</a>
+                            <a href="/users">Users</a>
+                        </>
+                    )}
             </div>
 
             <div className="nav-right">
                 {loading ? (
                     <span className="loading">Loading…</span>
                 ) : user ? (
-                    <> 
-                    <p>Hello, <b>{user.username}</b></p>
-                    <div className="profile-wrap" ref={menuRef}>
-                        <button
-                            className="icon-btn"
-                            onClick={() => setOpen((v) => !v)}
-                            aria-haspopup="menu"
-                            aria-expanded={open}
-                            aria-label="Open profile menu"
-                        >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4.1 0-7.5 2.2-7.5 5v1h15v-1c0-2.8-3.4-5-7.5-5Z" />
-                            </svg>
-                        </button>
+                    <>
+                        <p>
+                            Hello, <b>{user.username}</b>
+                        </p>
+                        <div className="profile-wrap" ref={menuRef}>
+                            <button
+                                className="icon-btn"
+                                onClick={() => setOpen((v) => !v)}
+                                aria-haspopup="menu"
+                                aria-expanded={open}
+                                aria-label="Open profile menu"
+                            >
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 12a4.5 4.5 0 1 0-4.5-4.5A4.5 4.5 0 0 0 12 12Zm0 2c-4.1 0-7.5 2.2-7.5 5v1h15v-1c0-2.8-3.4-5-7.5-5Z" />
+                                </svg>
+                            </button>
 
-                        {open && (
-                            <div className="menu" role="menu">
-                                <a
-                                    className="menu-item"
-                                    href="/profile"
-                                    role="menuitem"
-                                    onClick={() => setOpen(false)}
-                                >
-                                    Profile
-                                </a>
-                                <button
-                                    className="menu-item danger"
-                                    role="menuitem"
-                                    onClick={handleLogout}
-                                >
-                                    Logout
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                     </>
+                            {open && (
+                                <div className="menu" role="menu">
+                                    <a
+                                        className="menu-item"
+                                        href="/profile"
+                                        role="menuitem"
+                                        onClick={() => setOpen(false)}
+                                    >
+                                        Profile
+                                    </a>
+                                    <button
+                                        className="menu-item danger"
+                                        role="menuitem"
+                                        onClick={handleLogout}
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </>
                 ) : (
                     <div className="auth">
                         <a href="/login">Login</a>

@@ -90,16 +90,26 @@ const GameList = ({
     const [size, setSize] = useState<SizeFilter>("all");
 
     const queryString = useMemo(() => {
-        if (query !== undefined) {
-            return query;
-        }
-        const params = new URLSearchParams();
+        const raw = query ? query.replace(/^\?/, "") : "";
+        const params = new URLSearchParams(raw);
+
         params.set("p", String(page));
-        if (q.trim()) params.set("q", q.trim());
-        if (status !== "all") params.set("status", status);
-        if (ranked !== "all")
-            params.set("ranked", ranked === "ranked" ? "true" : "false");
-        if (size !== "all") params.set("size", size);
+
+        if (query === undefined) {
+            if (q.trim()) params.set("q", q.trim());
+            else params.delete("q");
+
+            if (status !== "all") params.set("status", status);
+            else params.delete("status");
+
+            if (ranked !== "all")
+                params.set("ranked", ranked === "ranked" ? "true" : "false");
+            else params.delete("ranked");
+
+            if (size !== "all") params.set("size", size);
+            else params.delete("size");
+        }
+
         return params.toString();
     }, [query, page, q, status, ranked, size]);
 
