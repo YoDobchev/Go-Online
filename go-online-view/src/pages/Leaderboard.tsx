@@ -15,13 +15,13 @@ const Leaderboard: React.FC = () => {
         );
     }
     return (
-        <div>
+        <>
             <Navbar />
-            <div>
+            <div className="leaderboard-box">
                 <h1>Leaderboard</h1>
                 <LeaderboardList />
             </div>
-        </div>
+        </>
     )
 };
 

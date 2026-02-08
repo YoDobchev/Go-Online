@@ -48,8 +48,15 @@ const Reports: React.FC = () => {
                     );
                 }
 
-                const data: ReportRow[] = await res.json();
-                setReports(data);
+                const data = await res.json();
+
+                const rows: ReportRow[] = Array.isArray(data)
+                    ? data
+                    : Array.isArray(data?.reports)
+                      ? data.reports
+                      : [];
+
+                setReports(rows);
             } catch (e: unknown) {
                 if (e instanceof DOMException && e.name === "AbortError")
                     return;

@@ -13,6 +13,13 @@ function parsePlayAs(v: string): PlayAs {
     return v === "0" || v === "1" || v === "2" ? (Number(v) as PlayAs) : 0;
 }
 
+function parseSeconds(v: string, fallback: number): number {
+    const n = Math.floor(Number(v));
+    if (!Number.isFinite(n)) return fallback;
+    // clamp to something sensible
+    return Math.min(Math.max(n, 1), 24 * 60 * 60);
+}
+
 type Props = {
     open: boolean;
     onClose: () => void;
@@ -22,6 +29,9 @@ type Props = {
     defaultPlayAs?: PlayAs;
     defaultSize?: CreateSize;
     defaultRanked?: boolean;
+
+    // NEW
+    defaultTimeSeconds?: number;
 };
 
 const CreateGame: React.FC<Props> = ({
@@ -32,10 +42,15 @@ const CreateGame: React.FC<Props> = ({
     defaultPlayAs = 0,
     defaultSize = "19",
     defaultRanked = true,
+
+    defaultTimeSeconds = 300,
 }) => {
     const [playAs, setPlayAs] = useState<PlayAs>(defaultPlayAs);
     const [createSize, setCreateSize] = useState<CreateSize>(defaultSize);
     const [createRanked, setCreateRanked] = useState<boolean>(defaultRanked);
+
+    const [timeSeconds, setTimeSeconds] = useState<number>(defaultTimeSeconds);
+
     const [creating, setCreating] = useState(false);
 
     useEffect(() => {
@@ -43,7 +58,9 @@ const CreateGame: React.FC<Props> = ({
         setPlayAs(defaultPlayAs);
         setCreateSize(defaultSize);
         setCreateRanked(defaultRanked);
-    }, [open, defaultPlayAs, defaultSize, defaultRanked]);
+
+        setTimeSeconds(defaultTimeSeconds);
+    }, [open, defaultPlayAs, defaultSize, defaultRanked, defaultTimeSeconds]);
 
     useEffect(() => {
         if (!open) return;
@@ -64,6 +81,8 @@ const CreateGame: React.FC<Props> = ({
                 playAs,
                 boardSize: Number(createSize),
                 ranked: createRanked,
+
+                timeSeconds,
             };
 
             const res = await fetch(`${API_BASE}/game/`, {
@@ -151,6 +170,28 @@ const CreateGame: React.FC<Props> = ({
                         <option value="ranked">Ranked</option>
                         <option value="unranked">Unranked</option>
                     </select>
+                </div>
+
+                {/* NEW */}
+                <div className="modal-row">
+                    <label>Time (seconds)</label>
+                    <input
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        max={86400}
+                        step={1}
+                        value={timeSeconds}
+                        onChange={(e) =>
+                            setTimeSeconds(
+                                parseSeconds(
+                                    e.target.value,
+                                    defaultTimeSeconds,
+                                ),
+                            )
+                        }
+                        disabled={creating}
+                    />
                 </div>
 
                 <div className="modal-actions">
