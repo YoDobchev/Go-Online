@@ -3,6 +3,7 @@ package routes
 import (
 	"net/http"
 
+	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -14,5 +15,10 @@ func BlogsRoutes() *chi.Mux {
 }
 
 func getBlogsHandler(w http.ResponseWriter, r *http.Request) {
-
+	blogs, err := gogame.LoadAllBlogsFromDB()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, blogs)
 }

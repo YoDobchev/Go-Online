@@ -1,0 +1,107 @@
+.bloglist {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.bloglist-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.bloglist-bar .title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #222;
+}
+
+.bloglist-bar .bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bloglist-bar input, select {
+    border: 1px solid #eee;
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+.bloglist-bar input:focus {
+    border-color: #ddd;
+}
+
+.bloglist-bar .plus {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #040404;
+    border-radius: 10px;
+    background: transparent;
+    color: #d4d4d4;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.bloglist-bar .plus span {
+    transform: translateY(-2px);
+}
+
+.bloglist-bar .plus:hover {
+    background: #b3b2b2;
+}
+
+.bloglist-box {
+    border: 1px solid #eee;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.bloglist-header,
+.blogrow {
+    display: grid;
+    grid-template-columns: 80px 1.8fr 1.2fr 1fr 1fr;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+}
+
+.bloglist-header {
+    background: #fafafa;
+    border-bottom: 1px solid #eee;
+    font-size: 0.78rem;
+    color: #666;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.blogrow {
+    border-top: 1px solid #f2f2f2;
+    font-size: 0.92rem;
+}
+
+.blogrow:hover {
+    background: #fcfcfc;
+}
+
+.cell.muted {
+    color: #777;
+}
+
+.state {
+    padding: 0.9rem;
+    color: #666;
+    font-size: 0.92rem;
+}
+
+.state.error {
+    color: #b00020;
+}

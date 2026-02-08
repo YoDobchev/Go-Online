@@ -197,3 +197,15 @@ func saveSnapshotIfNeededToDB(g *Game) error {
 
 	return database.DB.Save(&dbSnapshot).Error
 }
+
+func LoadAllBlogsFromDB() ([]map[string]any, error) {
+	var blogs []map[string]any
+
+	err := database.DB.
+		Model(&database.Blog{}).
+		Order("published_at DESC").
+		Omit("blog_content").
+		Find(&blogs).Error
+
+	return blogs, err
+}
