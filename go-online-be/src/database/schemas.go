@@ -87,19 +87,6 @@ type Blog struct {
 	AuthorName string `gorm:"type:text;not null"`
 }
 
-type Report struct {
-	ID int `gorm:"primaryKey"`
-
-	GameID string `gorm:"type:text;not null;index"`
-	Game   Game   `gorm:"foreignKey:GameID;references:ID;constraint:OnDelete:CASCADE;"`
-
-	UserID int  `gorm:"not null;index"`
-	User   User `gorm:"foreignKey:UserID;references:ID;constraint:OnDelete:CASCADE;"`
-
-	Reason    string `gorm:"type:text;not null"`
-	CreatedAt time.Time
-}
-
 type BlogReply struct {
 	ID           int       `gorm:"primaryKey"`
 	BlogID       int       `gorm:"not null"`
@@ -108,4 +95,16 @@ type BlogReply struct {
 	CreatedAt    time.Time `gorm:"not null"`
 
 	AuthorName string `gorm:"type:text;not null"`
+}
+
+type Report struct {
+	ID int `gorm:"primaryKey"`
+
+	GameID string `gorm:"type:text;not null;index"`
+	Game   Game   `gorm:"foreignKey:GameID;references:ID;constraint:OnDelete:CASCADE;"`
+
+	Username string `gorm:"type:text;not null;index"`
+	User     User   `gorm:"foreignKey:Username;references:Username;constraint:OnDelete:CASCADE;"`
+
+	CreatedAt time.Time
 }
