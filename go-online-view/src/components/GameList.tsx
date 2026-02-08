@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
-import "../styles/gamelist.scss";
+import "../styles/GameList.scss";
 import { useNavigate } from "react-router-dom";
 import BottomCenMsg from "./BottomCenMsg";
 import CreateGame from "./CreateGame";

@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { UserContext } from "../context/UserContext";
-import "../styles/navbar.scss";
+import "../styles/Navbar.scss";
 import { API_BASE } from "../config";
 
 const Navbar: React.FC = () => {

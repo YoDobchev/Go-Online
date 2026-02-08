@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
+	"github.com/YoDobchev/Go-Online/src/elo"
 )
 
 const (
@@ -235,4 +236,17 @@ func CreateBlog(id int, authorID int, title string, content string) error {
 	}
 
 	return database.DB.Create(&blog).Error
+}
+
+func GetLeaderBoard() ([]map[string]any, error) {
+	var leaderboard []map[string]any
+	err := database.DB.
+		Model(&database.User{}).
+		Order("elo DESC").
+		Limit(20).
+		Find(&leaderboard).Error
+	for _, user := range leaderboard {
+		user["rank"], _ = elo.GetRank(user["elo"].(int))
+	}
+	return leaderboard, err
 }
