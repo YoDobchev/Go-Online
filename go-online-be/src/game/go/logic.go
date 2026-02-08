@@ -205,7 +205,7 @@ func (g *Game) startClock() {
 					}
 					g.mu.Unlock()
 
-					g.emitGameEnded(g.MoveNum)
+					g.finalizeGame(g.MoveNum)
 
 					g.mu.Lock()
 					g.end()
@@ -351,6 +351,9 @@ func (g *Game) ApplyMove(m Move) error {
 }
 
 func analyzeAndStore(engine *katago.Engine, gameID string, moveNo int, boardSize int, komi float32) {
+	if !katago.EnableAnalysis {
+		return
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
@@ -408,7 +411,7 @@ func (g *Game) Resign(player string) error {
 	if g.CurrectTurn == White {
 		g.WinnerIndex = 0
 	}
-	g.emitGameEnded(g.MoveNum)
+	g.finalizeGame(g.MoveNum)
 	g.end()
 
 	delete(PlayerToGame, g.Players[0])
@@ -426,9 +429,15 @@ func (g *Game) endGame() {
 	} else if g.BlackPoints > g.WhitePoints {
 		g.WinnerIndex = 0
 	}
-	g.emitGameEnded(g.MoveNum + 1)
+	g.finalizeGame(g.MoveNum + 1)
 	g.end()
 	updateElo(g)
+}
+
+func (g *Game) finalizeGame(moveNum int) {
+	updateElo(g)
+	g.emitGameEnded(moveNum)
+
 }
 
 func (g *Game) emitGameEnded(moveNum int) {

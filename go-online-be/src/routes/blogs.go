@@ -78,7 +78,7 @@ func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := gogame.CreateBlog(req.Id, user.ID, req.Title, req.Content)
+	err := gogame.CreateBlog(req.Id, req.AuthorId, req.Title, req.Content)
 	if err != nil {
 		http.Error(w, "could not create blog", http.StatusInternalServerError)
 		return

@@ -43,14 +43,15 @@ type Response struct {
 }
 
 var Eng *Engine
+var EnableAnalysis = true
 
 func InitEng() {
 	bin := os.Getenv("KATAGO_BIN")
 	model := os.Getenv("KATAGO_ANALYSIS_MODEL")
 	cfg := os.Getenv("KATAGO_ANALYSIS_CONFIG")
-	fmt.Println(bin + " " + model + " " + cfg)
 	if bin == "" || model == "" || cfg == "" {
-		panic("katago env not configured")
+		EnableAnalysis = false
+		return
 	}
 	var err error
 	Eng, err = Start(context.Background(), bin, cfg, model)
@@ -92,6 +93,9 @@ func Start(ctx context.Context, katagoPath, cfgPath, modelPath string) (*Engine,
 }
 
 func (e *Engine) Analyze(ctx context.Context, q Query) (Response, error) {
+	if !EnableAnalysis {
+		return Response{}, errors.New("analysis disabled")
+	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
 

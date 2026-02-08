@@ -154,11 +154,7 @@ const CreateGame: React.FC<Props> = ({
                 </div>
 
                 <div className="modal-actions">
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        disabled={creating}
-                    >
+                    <button type="button" onClick={onClose} disabled={creating}>
                         Cancel
                     </button>
 

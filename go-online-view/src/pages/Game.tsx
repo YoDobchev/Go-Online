@@ -78,6 +78,10 @@ const Game: React.FC = () => {
     const [msg, setMsg] = useState("");
     const handleCloseMsg = useCallback(() => setShow(false), []);
 
+    const [playerElos, setPlayerElos] = useState<{
+        [username: string]: number;
+    }>({});
+
     const [gameEndedInfo, setGameEndedInfo] = useState<{
         players: [string, string];
         white_points: number;
@@ -256,6 +260,55 @@ const Game: React.FC = () => {
         };
     };
 
+    const endedBlack = gameEndedInfo?.players?.[0] ?? "";
+    const endedWhite = gameEndedInfo?.players?.[1] ?? "";
+
+    const liveBlack = gameInfo?.players?.[0] ?? "";
+    const liveWhite = gameInfo?.players?.[1] ?? "";
+
+    const blackName = endedBlack || liveBlack;
+    const whiteName = endedWhite || liveWhite;
+
+    const eloRefreshToken = gameEndedInfo?.moveNum ?? null;
+
+    useEffect(() => {
+        const players = [blackName, whiteName].filter(Boolean);
+        if (players.length === 0) return;
+
+        const uniquePlayers = Array.from(new Set(players));
+        const ac = new AbortController();
+
+        (async () => {
+            const updates: Record<string, number> = {};
+
+            await Promise.all(
+                uniquePlayers.map(async (player) => {
+                    const res = await fetch(
+                        `${API_BASE}/users/${encodeURIComponent(player)}/elo`,
+                        {
+                            method: "GET",
+                            credentials: "include",
+                            headers: { Accept: "application/json" },
+                            signal: ac.signal,
+                        },
+                    );
+
+                    if (!res.ok) return;
+
+                    const data = await res.json();
+                    updates[player] = data.elo;
+                }),
+            );
+
+            if (ac.signal.aborted) return;
+            setPlayerElos((prev) => ({ ...prev, ...updates }));
+        })().catch((e) => {
+            if (!ac.signal.aborted) console.error("Failed to fetch elos:", e);
+        });
+
+        return () => ac.abort();
+    }, [blackName, whiteName, eloRefreshToken]);
+
     const backToLive = () => {
         setViewMoveNum(null);
         setViewBoard(null);
@@ -323,11 +376,15 @@ const Game: React.FC = () => {
                         <>
                             <div className="game-players">
                                 <strong className="player-black">
-                                    {gameInfo.players[0]}
+                                    {gameInfo.players[0]
+                                        ? `${gameInfo.players[0]} (${playerElos[gameInfo.players[0]] ?? "?"})`
+                                        : "(waiting)"}
                                 </strong>{" "}
                                 vs{" "}
                                 <strong className="player-white">
-                                    {gameInfo.players[1] || "(waiting)"}
+                                    {gameInfo.players[1]
+                                        ? `${gameInfo.players[1]} (${playerElos[gameInfo.players[1]] ?? "?"})`
+                                        : "(waiting)"}
                                 </strong>
                             </div>
 
@@ -350,11 +407,17 @@ const Game: React.FC = () => {
                         <div className="game-status__ended-notice">
                             <div>
                                 <strong className="player-black">
-                                    {gameEndedInfo.players[0]}
+                                    {gameEndedInfo.players[0]} (
+                                    {playerElos[gameEndedInfo.players[0]] ??
+                                        "?"}
+                                    )
                                 </strong>{" "}
                                 vs{" "}
                                 <strong className="player-white">
-                                    {gameEndedInfo.players[1]}
+                                    {gameEndedInfo.players[1]} (
+                                    {playerElos[gameEndedInfo.players[1]] ??
+                                        "?"}
+                                    )
                                 </strong>
                             </div>
 

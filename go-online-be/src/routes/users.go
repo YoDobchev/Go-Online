@@ -14,6 +14,8 @@ import (
 func UsersRoutes() *chi.Mux {
 	r := chi.NewRouter()
 
+	r.Get("/{username}/elo", getEloForUserHandler)
+
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsModerator)
 		r.Get("/{username}", getUserHandler)
@@ -57,6 +59,24 @@ func getUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func getEloForUserHandler(w http.ResponseWriter, r *http.Request) {
+	username := chi.URLParam(r, "username")
+	if username == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing username"})
+		return
+	}
+
+	var user database.User
+	if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "user not found"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"elo": user.Elo,
+	})
 }
 
 func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
