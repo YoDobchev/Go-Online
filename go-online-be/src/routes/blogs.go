@@ -17,8 +17,12 @@ func BlogsRoutes() *chi.Mux {
 
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
-		r.Post("/", postNewBlogHandler)
 		r.Get("/{id}/replies", getBlogRepliesHandler)
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.IsAdmin)
+		r.Post("/", postNewBlogHandler)
 	})
 
 	return r
@@ -57,17 +61,6 @@ type createBlogReq struct {
 }
 
 func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromCtx(r)
-	if !ok {
-		http.Error(w, "user missing", http.StatusUnauthorized)
-		return
-	}
-
-	if user.Role != "admin" {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-
 	var req createBlogReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
