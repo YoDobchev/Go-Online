@@ -22,6 +22,11 @@ func BlogsRoutes() *chi.Mux {
 		r.Delete("/{id}/replies", deleteBlogReplyHandler)
 	})
 
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.IsAdmin)
+		r.Post("/", postNewBlogHandler)
+	})
+
 	return r
 }
 
@@ -67,17 +72,6 @@ type deleteBlogReplyReq struct {
 }
 
 func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromCtx(r)
-	if !ok {
-		http.Error(w, "user missing", http.StatusUnauthorized)
-		return
-	}
-
-	if user.Role != "admin" {
-		http.Error(w, "forbidden", http.StatusForbidden)
-		return
-	}
-
 	var req createBlogReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)

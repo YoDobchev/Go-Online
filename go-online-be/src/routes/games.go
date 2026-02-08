@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/YoDobchev/Go-Online/src/database"
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
 	"github.com/YoDobchev/Go-Online/src/middleware"
 	ws "github.com/YoDobchev/Go-Online/src/websocket"
@@ -92,5 +93,18 @@ func getGameStateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, board)
+	var gm database.GameMove
+	blackWinProb := float32(0)
+	if gogame.GameInstances[gameID].GameProgress == gogame.GAME_ENDED {
+		if err := database.DB.Where("game_id = ? AND move_no = ?", game.ID, moveNumi).First(&gm).Error; err == nil {
+			blackWinProb = gm.BlackWinProb
+		}
+	} else {
+		blackWinProb = -1
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"board":        board,
+		"blackWinProb": blackWinProb,
+	})
 }

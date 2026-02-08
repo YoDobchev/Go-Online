@@ -17,6 +17,11 @@ interface GameInfo {
     moveNum: number;
 }
 
+interface MoveResp {
+    board: Board;
+    blackWinProb: number;
+}
+
 interface Status {
     role: "player" | "spectator";
     seat: "black" | "white" | "spectator";
@@ -62,6 +67,7 @@ const Game: React.FC = () => {
 
     const [viewMoveNum, setViewMoveNum] = useState<number | null>(null);
     const [viewBoard, setViewBoard] = useState<Board | null>(null);
+    const [blackWinProb, setBlackWinProb] = useState<number | null>(null);
 
     const [clocks, setClocks] = useState<Record<number, ClockSnapshot>>({});
     const [clockReceivedAt, setClockReceivedAt] = useState<number>(Date.now());
@@ -91,8 +97,9 @@ const Game: React.FC = () => {
                     `${API_BASE}/game/${gameID}/state?moveNum=${moveNum}`,
                 );
                 if (!res.ok) throw new Error(await res.text());
-                const b = (await res.json()) as Board;
-                setViewBoard(b);
+                const b = (await res.json()) as MoveResp;
+                setViewBoard(b.board);
+                setBlackWinProb(b.blackWinProb);
             } catch (e) {
                 console.error("Failed to load snapshot:", e);
             }
@@ -261,22 +268,6 @@ const Game: React.FC = () => {
 
     if (!gameEndedInfo && !gameInfo) return <div>Loading game info...</div>;
 
-    // const makeEmptyBoard = (size = 19): Board => ({
-    //     size,
-    //     squares: Array.from({ length: size }, () =>
-    //         Array.from({ length: size }, () => 0),
-    //     ),
-    // });
-
-    // const safeGameInfo: GameInfo =
-    //     gameInfo ??
-    //     ({
-    //         players: ["", ""],
-    //         turn: 1,
-    //         board: makeEmptyBoard(19),
-    //         moveNum: 0,
-    //     } as GameInfo);
-
     const maxMoveNum = gameEndedInfo?.moveNum ?? gameInfo?.moveNum ?? 0;
     const boardToShow = viewBoard ?? gameInfo?.board;
     const isLive = viewMoveNum === null;
@@ -443,6 +434,48 @@ const Game: React.FC = () => {
                             <button onClick={backToLive} className="btlbtn">
                                 Back to Live
                             </button>
+                        </div>
+                    )}
+
+                    {blackWinProb != null && blackWinProb != -1 && (
+                        <div className="winprob">
+                            <div className="winprob__header">
+                                <div className="winprob__title">Prediction</div>
+                                <div className="winprob__nums">
+                                    <span className="winprob__num winprob__num--black">
+                                        ⚫ {Math.round(blackWinProb * 100)}%
+                                    </span>
+                                    <span className="winprob__num winprob__num--white">
+                                        ⚪{" "}
+                                        {Math.round((1 - blackWinProb) * 100)}%
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div
+                                className="winprob__bar"
+                                role="img"
+                                aria-label={`Predicted win chance: Black ${Math.round(
+                                    blackWinProb * 100,
+                                )}%, White ${Math.round((1 - blackWinProb) * 100)}%`}
+                            >
+                                <div
+                                    className="winprob__seg winprob__seg--black"
+                                    style={{
+                                        width: `${Math.max(0, Math.min(1, blackWinProb)) * 100}%`,
+                                    }}
+                                />
+                                <div
+                                    className="winprob__mid"
+                                    aria-hidden="true"
+                                />
+                                <div
+                                    className="winprob__seg winprob__seg--white"
+                                    style={{
+                                        width: `${Math.max(0, Math.min(1, 1 - blackWinProb)) * 100}%`,
+                                    }}
+                                />
+                            </div>
                         </div>
                     )}
 

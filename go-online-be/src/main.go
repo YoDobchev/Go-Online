@@ -7,6 +7,7 @@ import (
 
 	"github.com/YoDobchev/Go-Online/src/database"
 	gogame "github.com/YoDobchev/Go-Online/src/game/go"
+	"github.com/YoDobchev/Go-Online/src/katago"
 	"github.com/YoDobchev/Go-Online/src/routes"
 	"github.com/joho/godotenv"
 )
@@ -19,6 +20,8 @@ func main() {
 	database.Connect()
 
 	gogame.LoadGamesFromDB()
+
+	katago.InitEng()
 
 	r := routes.New()
 
