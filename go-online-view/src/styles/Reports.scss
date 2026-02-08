@@ -1,0 +1,122 @@
+.reports-page {
+    max-width: 1000px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.reports-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.reports-status {
+    padding: 12px;
+}
+
+.reports-error {
+    padding: 12px;
+    color: #b91c1c;
+}
+
+.reports-denied {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    text-align: center;
+
+    &__title {
+        font-size: 30px;
+        font-weight: 800;
+        margin-bottom: 12px;
+    }
+
+    &__text {
+        color: #6b7280;
+    }
+}
+
+.reports-table {
+    border: 1px solid #eee;
+    border-radius: 12px;
+    overflow: hidden;
+
+    &__grid {
+        display: grid;
+        grid-template-columns: 90px 220px 140px 160px 80px;
+        align-items: center;
+        gap: 0;
+    }
+
+    &__header {
+        background: #fafafa;
+        padding: 10px 12px;
+        font-weight: 600;
+        border-bottom: 1px solid #eee;
+    }
+
+    &__row {
+        padding: 10px 12px;
+        border-bottom: 1px solid #f2f2f2;
+    }
+
+    &__actionsHeader {
+        text-align: right;
+    }
+
+    &__actionsCell {
+        display: flex;
+        justify-content: flex-end;
+    }
+}
+
+.muted {
+    color: #6b7280;
+}
+
+.game-link {
+    text-decoration: underline;
+}
+
+.delete-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: none;
+    background: #44b938;
+    color: #fff !important;
+    font-size: 18px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+        background 120ms ease,
+        transform 120ms ease,
+        opacity 120ms ease;
+
+    &:hover:not(:disabled) {
+        background: #35912a;
+        transform: translateY(-1px);
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(0px);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+@media (max-width: 720px) {
+    .reports-table {
+        &__grid {
+            grid-template-columns: 70px 1fr 110px 150px 60px;
+        }
+    }
+}

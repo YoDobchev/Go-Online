@@ -307,3 +307,34 @@ func GetBlogReplies(blogID int) ([]map[string]any, error) {
 		Model(&database.BlogReply{}).Where("blog_id = ?", blogID).Find(&replies).Error
 	return replies, err
 }
+
+func SaveReportToDB(gameID string, username string) error {
+	if database.DB == nil {
+		return nil
+	}
+
+	report := database.Report{
+		GameID:   gameID,
+		Username: username,
+	}
+	return database.DB.Create(&report).Error
+}
+
+func LoadAllReportsFromDB() ([]map[string]any, error) {
+	var reports []map[string]any
+
+	err := database.DB.
+		Model(&database.Report{}).
+		Order("created_at DESC").
+		Find(&reports).Error
+
+	return reports, err
+}
+
+func DeleteReportFromDB(reportID string) error {
+	if database.DB == nil {
+		return nil
+	}
+
+	return database.DB.Delete(&database.Report{}, reportID).Error
+}
