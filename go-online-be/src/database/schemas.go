@@ -72,3 +72,15 @@ type GameSnapshot struct {
 
 	CreatedAt time.Time
 }
+
+type Blog struct {
+	ID          int    `gorm:"primaryKey"`
+	AuthorID    int    `gorm:"not null"`
+	Title       string `gorm:"type:text;not null"`
+	BlogContent string `gorm:"type:text;not null"`
+
+	PublishedAt time.Time `gorm:"not null"`
+	UpdatedAt   time.Time
+
+	AuthorName string `gorm:"type:text;not null"`
+}

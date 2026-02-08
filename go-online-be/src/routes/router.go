@@ -29,6 +29,7 @@ func New() *chi.Mux {
 	r.Mount("/api/auth", AuthRoutes())
 	r.Mount("/api/game", GamesRoutes())
 	r.Mount("/api/search", SearchRoutes())
+	r.Mount("/api/blogs", BlogsRoutes())
 
 	return r
 }

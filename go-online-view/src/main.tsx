@@ -8,6 +8,7 @@ import Register from "./pages/Register";
 import Logout from "./pages/Logout";
 import Game from "./pages/Game";
 import Profile from "./pages/Profile";
+import Blogs from "./pages/Blogs";
 
 import "./styles/index.scss";
 
@@ -22,7 +23,8 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/register" element={<Register />} />
                 <Route path="/logout" element={<Logout />} />
                 <Route path="/game/:gameID" element={<Game />} />
-                <Route path="/profile" element={< Profile/>} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/blogs" element={<Blogs />} />
             </Routes>
         </AppProviders>
     </StrictMode>
