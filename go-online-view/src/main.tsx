@@ -15,6 +15,7 @@ import "./styles/index.scss";
 
 import { AppProviders } from "./AppProviders";
 import BlogContent from "./pages/BlogContent";
+import About from "./pages/About";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -29,6 +30,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/blogs" element={<Blogs />} />
                 <Route path="/blogs/:id" element={<BlogContent />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/about" element = {<About />}/>
             </Routes>
         </AppProviders>
     </StrictMode>

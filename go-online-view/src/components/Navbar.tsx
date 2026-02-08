@@ -45,6 +45,8 @@ const Navbar: React.FC = () => {
                 <a href="/search">Search</a>
                 <a href="/blogs">Blogs</a>
                 <a href="/leaderboard">LeaderBoard</a>
+                <a href="/about">About</a>
+
             </div>
 
             <div className="nav-right">
