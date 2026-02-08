@@ -149,7 +149,7 @@ export default function BlogsList() {
                                 <div className="cell muted">
                                     {blog.updated_at
                                         ? new Date(blog.updated_at).toISOString().slice(0, 10)
-                                        : "—"}
+                                        : "-"}
                                 </div>
                             </a>
                         </div>

@@ -18,6 +18,7 @@ func BlogsRoutes() *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
 		r.Post("/", postNewBlogHandler)
+		r.Get("/{id}/replies", getBlogRepliesHandler)
 	})
 
 	return r
@@ -82,4 +83,20 @@ func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"id": strconv.Itoa(req.Id),
 	})
+}
+
+func getBlogRepliesHandler(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	blogID, err := strconv.Atoi(id)
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid blog id"})
+		return
+	}
+
+	replies, err := gogame.GetBlogReplies(blogID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, replies)
 }

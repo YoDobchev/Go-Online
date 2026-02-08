@@ -250,3 +250,10 @@ func GetLeaderBoard() ([]map[string]any, error) {
 	}
 	return leaderboard, err
 }
+
+func GetBlogReplies(blogID int) ([]map[string]any, error) {
+	var replies []map[string]any
+	err := database.DB.
+		Model(&database.BlogReply{}).Where("blog_id = ?", blogID).Find(&replies).Error
+	return replies, err
+}
