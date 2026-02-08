@@ -50,8 +50,17 @@ func (h *gameHub) startPump(game *gogame.Game) {
 						return
 					}
 					h.broadcast(ev)
+
 				case <-game.Done():
-					return
+					for {
+						select {
+						case ev := <-game.Events:
+							h.broadcast(ev)
+						default:
+							h.shutdown()
+							return
+						}
+					}
 				}
 			}
 		}()
@@ -82,6 +91,15 @@ func (h *gameHub) broadcast(v any) {
 	}
 }
 
+func (h *gameHub) shutdown() {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	for cconn := range h.clients {
+		_ = cconn.Close()
+	}
+	h.clients = make(map[*websocket.Conn]*client)
+}
+
 var (
 	hubsMu sync.Mutex
 	hubs   = map[string]*gameHub{}
@@ -106,11 +124,6 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if game.GameProgress == gogame.GAME_ENDED {
-		http.Error(w, "game ended", http.StatusGone)
-		return
-	}
-
 	username := ""
 	if user, err := middleware.GetUserInfo(r); err == nil {
 		username = user.Username
@@ -121,6 +134,22 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+
+	if game.GameProgress == gogame.GAME_ENDED {
+		_ = conn.WriteJSON(map[string]any{
+			"type": "game_ended",
+			"data": map[string]any{
+				"players":      game.Players,
+				"white_points": game.WhitePoints,
+				"black_points": game.BlackPoints,
+				"winner":       game.WinnerIndex,
+				"reason":       game.GameEndedReason,
+				"moveNum":      game.MoveNum,
+			},
+		})
+		conn.Close()
+		return
+	}
 
 	hub := getHub(gameID)
 	c := &client{conn: conn, role: "spectator", user: username}
@@ -224,31 +253,40 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 					"moveNum": game.MoveNum,
 				},
 			})
+		case "play_resign":
+			if role != "player" {
+				_ = conn.WriteJSON(map[string]any{
+					"type": "error",
+					"data": "spectators cannot resign",
+				})
+				continue
+			}
+
+			if err := game.Resign(username); err != nil {
+				_ = conn.WriteJSON(map[string]any{"type": "error", "data": err.Error()})
+				continue
+			}
+
 		default:
 			_ = conn.WriteJSON(map[string]any{"type": "error", "data": "unknown message type"})
 		}
 
 		if game.GameProgress == gogame.GAME_ENDED {
-			if !game.EndedByTimeout {
-				hub.broadcast(map[string]any{
-					"type": "game_ended",
-					"data": map[string]any{
-						"white_points": game.WhitePoints,
-						"black_points": game.BlackPoints,
-						"winner":       game.WinnerIndex,
-					},
-				})
-			}
+			// hub.broadcast(map[string]any{
+			// 	"type": "game_ended",
+			// 	"data": map[string]any{
+			// 		"white_points": game.WhitePoints,
+			// 		"black_points": game.BlackPoints,
+			// 		"winner":       game.WinnerIndex,
+			// 		"reason":       game.GameEndedReason,
+			// 		"moveNum":      game.MoveNum,
+			// 	},
+			// })
 
 			delete(gogame.PlayerToGame, game.Players[0])
 			delete(gogame.PlayerToGame, game.Players[1])
 
-			hub.mu.Lock()
-			for cconn := range hub.clients {
-				_ = cconn.Close()
-			}
-			hub.clients = make(map[*websocket.Conn]*client)
-			hub.mu.Unlock()
+			// hub.shutdown()
 
 			break
 		}

@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
         <nav className="navbar">
             <div className="nav-left">
                 <a href="/" className="brand">
-                    <img src="images/logo.jpg" alt="Go Online" />
+                    <img src="/images/logo.jpg" alt="Go Online" />
                     <span>Go Online</span>
                 </a>
 
@@ -53,6 +53,8 @@ const Navbar: React.FC = () => {
                 {loading ? (
                     <span className="loading">Loading…</span>
                 ) : user ? (
+                    <> 
+                    <p>Hello, <b>{user.username}</b></p>
                     <div className="profile-wrap" ref={menuRef}>
                         <button
                             className="icon-btn"
@@ -86,6 +88,7 @@ const Navbar: React.FC = () => {
                             </div>
                         )}
                     </div>
+                     </>
                 ) : (
                     <div className="auth">
                         <a href="/login">Login</a>

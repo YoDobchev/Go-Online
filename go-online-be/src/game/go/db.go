@@ -30,23 +30,30 @@ func LoadGamesFromDB() {
 		if err != nil {
 			panic(err)
 		}
+
+		var endedReason string
+		if dbGame.GameEndedReason != nil {
+			endedReason = *dbGame.GameEndedReason
+		}
+
 		g := &Game{
-			ID:           dbGame.ID,
-			Ranked:       dbGame.Ranked,
-			Players:      [2]string{playerBlack, playerWhite},
-			Board:        board,
-			CurrectTurn:  dbGame.CurrentTurn,
-			passed:       dbGame.Passed,
-			WinnerIndex:  dbGame.WinnerIndex,
-			Komi:         dbGame.Komi,
-			GameProgress: dbGame.GameProgress,
-			WhitePoints:  dbGame.WhitePoints,
-			BlackPoints:  dbGame.BlackPoints,
-			MoveNum:      dbGame.MoveNo + 1,
-			hash:         uint64(dbGame.CurrentHash),
-			chains:       NewChainsMap(board),
-			zobrist:      NewZobristTable(board.Size),
-			seen:         make(map[uint64]struct{}),
+			ID:              dbGame.ID,
+			Ranked:          dbGame.Ranked,
+			Players:         [2]string{playerBlack, playerWhite},
+			Board:           board,
+			CurrectTurn:     dbGame.CurrentTurn,
+			passed:          dbGame.Passed,
+			WinnerIndex:     dbGame.WinnerIndex,
+			GameEndedReason: endedReason,
+			Komi:            dbGame.Komi,
+			GameProgress:    dbGame.GameProgress,
+			WhitePoints:     dbGame.WhitePoints,
+			BlackPoints:     dbGame.BlackPoints,
+			MoveNum:         dbGame.MoveNo + 1,
+			hash:            uint64(dbGame.CurrentHash),
+			chains:          NewChainsMap(board),
+			zobrist:         NewZobristTable(board.Size),
+			seen:            make(map[uint64]struct{}),
 		}
 
 		GameInstances[g.ID] = g
@@ -149,22 +156,28 @@ func saveGameToDB(g *Game) error {
 		playerWhite = &g.Players[1]
 	}
 
+	var endedReason *string
+	if g.GameEndedReason != "" {
+		endedReason = &g.GameEndedReason
+	}
+
 	dbGame := database.Game{
-		ID:           g.ID,
-		BoardSize:    g.Board.Size,
-		Ranked:       g.Ranked,
-		PlayerBlack:  playerBlack,
-		PlayerWhite:  playerWhite,
-		WinnerIndex:  g.WinnerIndex,
-		Komi:         g.Komi,
-		CurrentTurn:  g.CurrectTurn,
-		Passed:       g.passed,
-		GameProgress: g.GameProgress,
-		WhitePoints:  g.WhitePoints,
-		BlackPoints:  g.BlackPoints,
-		MoveNo:       g.MoveNum,
-		CurrentHash:  int64(g.hash),
-		UpdatedAt:    time.Now(),
+		ID:              g.ID,
+		BoardSize:       g.Board.Size,
+		Ranked:          g.Ranked,
+		PlayerBlack:     playerBlack,
+		PlayerWhite:     playerWhite,
+		WinnerIndex:     g.WinnerIndex,
+		GameEndedReason: endedReason,
+		Komi:            g.Komi,
+		CurrentTurn:     g.CurrectTurn,
+		Passed:          g.passed,
+		GameProgress:    g.GameProgress,
+		WhitePoints:     g.WhitePoints,
+		BlackPoints:     g.BlackPoints,
+		MoveNo:          g.MoveNum,
+		CurrentHash:     int64(g.hash),
+		UpdatedAt:       time.Now(),
 	}
 
 	return database.DB.Save(&dbGame).Error
