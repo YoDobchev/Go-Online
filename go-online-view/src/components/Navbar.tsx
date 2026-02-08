@@ -42,7 +42,6 @@ const Navbar: React.FC = () => {
                     <span>Go Online</span>
                 </a>
 
-                <a href="/search">Search</a>
                 <a href="/blogs">Blogs</a>
                 <a href="/leaderboard">LeaderBoard</a>
                 <a href="/dashboard">DashBoard</a>

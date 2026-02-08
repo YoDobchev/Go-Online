@@ -28,9 +28,10 @@ func GamesRoutes() *chi.Mux {
 }
 
 type createGameReq struct {
-	PlayAs    int  `json:"playAs"`
-	BoardSize int  `json:"boardSize"`
-	Ranked    bool `json:"ranked"`
+	PlayAs      int  `json:"playAs"`
+	BoardSize   int  `json:"boardSize"`
+	Ranked      bool `json:"ranked"`
+	TimeSeconds int  `json:"timeSeconds"`
 }
 
 func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +54,10 @@ func postNewGameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newGame, err := gogame.NewGame(user.Username, gogame.NewGameSettings{
-		PlayAs:    req.PlayAs,
-		BoardSize: req.BoardSize,
-		Ranked:    req.Ranked,
+		PlayAs:      req.PlayAs,
+		BoardSize:   req.BoardSize,
+		Ranked:      req.Ranked,
+		TimeSeconds: req.TimeSeconds,
 	})
 
 	if err != nil {

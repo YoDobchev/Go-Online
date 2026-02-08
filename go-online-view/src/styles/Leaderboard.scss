@@ -1,3 +1,15 @@
+.leaderboard-box {
+    width: 100%;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    align-items: center;
+    & h1 {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 700;
+        width: 100%;
+    }
+}
 .leaderboardlist {
     .leaderboardrow:nth-of-type(2) {
         background: linear-gradient(90deg, #fff7d6, #fff);
@@ -32,7 +44,7 @@
 }
 
 .leaderboardlist {
-    max-width: 980px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 1rem;
 }

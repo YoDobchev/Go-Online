@@ -33,10 +33,10 @@ const (
 )
 
 type NewGameSettings struct {
-	PlayAs    int
-	BoardSize int
-	Ranked    bool
-	// Time      string `json:"time"`
+	PlayAs      int
+	BoardSize   int
+	Ranked      bool
+	TimeSeconds int
 }
 
 type Game struct {
@@ -51,6 +51,8 @@ type Game struct {
 	WhitePoints     int
 	BlackPoints     int
 	GameEndedReason string
+
+	ClockTimeSeconds int
 
 	done     chan struct{}
 	doneOnce sync.Once
@@ -105,6 +107,7 @@ func NewGame(creator string, settings NewGameSettings) (*Game, error) {
 	g.Players[settings.PlayAs] = creator
 	g.CurrectTurn = Black
 	g.Ranked = settings.Ranked
+	g.ClockTimeSeconds = settings.TimeSeconds
 
 	g.zobrist = NewZobristTable(settings.BoardSize)
 	g.hash = g.zobrist.HashBoard(g.Board.Squares, true)
@@ -151,7 +154,7 @@ func (g *Game) Join(player string) error {
 	if g.Players[0] != "" && g.Players[1] != "" {
 		if g.GameProgress == GAME_WAITING_FOR_PLAYER {
 			g.GameProgress = GAME_IN_PROGRESS
-			g.startClock()
+			g.startClock(g.ClockTimeSeconds)
 		}
 	}
 
@@ -160,10 +163,11 @@ func (g *Game) Join(player string) error {
 	return nil
 }
 
-func (g *Game) startClock() {
+func (g *Game) startClock(seconds int) {
+	d := time.Duration(seconds) * time.Second
 	go func() {
 		timeFormat := clock.TimeFormat{
-			MainTime:       300 * time.Second,
+			MainTime:       d,
 			ByoYomi:        0,
 			ByoYomiPeriods: 0,
 		}
