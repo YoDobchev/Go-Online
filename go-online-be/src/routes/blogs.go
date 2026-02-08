@@ -14,10 +14,12 @@ func BlogsRoutes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Get("/", getBlogsHandler)
 	r.Get("/{id}", getBlogByIDHandler)
-
+	r.Get("/{id}/replies", getBlogRepliesHandler)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
-		r.Get("/{id}/replies", getBlogRepliesHandler)
+		r.Post("/", postNewBlogHandler)
+		r.Post("/{id}/replies", postBlogReplyHandler)
+		r.Delete("/{id}/replies", deleteBlogReplyHandler)
 	})
 
 	r.Group(func(r chi.Router) {
@@ -60,6 +62,15 @@ type createBlogReq struct {
 	Content  string `json:"content"`
 }
 
+type createBlogReplyReq struct {
+	BlogID  int    `json:"blogId,omitempty"`
+	Content string `json:"replyContent"`
+}
+
+type deleteBlogReplyReq struct {
+	ReplyID int `json:"id,omitempty"`
+}
+
 func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
 	var req createBlogReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -67,7 +78,7 @@ func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := gogame.CreateBlog(req.Id, req.AuthorId, req.Title, req.Content)
+	err := gogame.CreateBlog(req.Id, user.ID, req.Title, req.Content)
 	if err != nil {
 		http.Error(w, "could not create blog", http.StatusInternalServerError)
 		return
@@ -92,4 +103,52 @@ func getBlogRepliesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, replies)
+}
+
+func postBlogReplyHandler(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromCtx(r)
+	if !ok {
+		http.Error(w, "user missing", http.StatusUnauthorized)
+		return
+	}
+
+	var req createBlogReplyReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := gogame.CreateBlogReply(req.BlogID, user.ID, req.Content)
+	if err != nil {
+		http.Error(w, "could not create blog reply", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "blog reply created successfully",
+	})
+}
+
+func deleteBlogReplyHandler(w http.ResponseWriter, r *http.Request) {
+	var req deleteBlogReplyReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	user, ok := middleware.GetUserFromCtx(r)
+	if !ok {
+		http.Error(w, "user missing", http.StatusUnauthorized)
+		return
+	}
+
+	err := gogame.DeleteBlogReply(user.ID, req.ReplyID)
+	if err != nil {
+		http.Error(w, "could not delete blog reply", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "blog reply deleted successfully",
+	})
 }

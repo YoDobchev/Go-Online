@@ -1,6 +1,7 @@
 package gogame
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/YoDobchev/Go-Online/src/database"
@@ -306,6 +307,46 @@ func GetBlogReplies(blogID int) ([]map[string]any, error) {
 	err := database.DB.
 		Model(&database.BlogReply{}).Where("blog_id = ?", blogID).Find(&replies).Error
 	return replies, err
+}
+
+func CreateBlogReply(blogID int, authorID int, content string) error {
+	var author database.User
+	if err := database.DB.First(&author, authorID).Error; err != nil {
+		return err
+	}
+
+	var blog database.Blog
+	if err := database.DB.First(&blog, blogID).Error; err != nil {
+		return err
+	}
+
+	reply := database.BlogReply{
+		BlogID:       blogID,
+		AuthorID:     authorID,
+		AuthorName:   author.Username,
+		ReplyContent: content,
+		CreatedAt:    time.Now(),
+	}
+
+	return database.DB.Create(&reply).Error
+}
+
+func DeleteBlogReply(authorID int, replyID int) error {
+	var author database.User
+	if err := database.DB.First(&author, authorID).Error; err != nil {
+		return err
+	}
+
+	var reply database.BlogReply
+	if err := database.DB.First(&reply, replyID).Error; err != nil {
+		return err
+	}
+
+	if author.Role != "admin" && author.ID != reply.AuthorID {
+		return fmt.Errorf("user is not authorized to delete this blog reply")
+	}
+
+	return database.DB.Delete(&reply).Error
 }
 
 func SaveReportToDB(gameID string, username string) error {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/BlogContent.scss";
+import BottomCenMsg from "../components/BottomCenMsg";
+import CreateReply from "../components/CreateReply";
 
 type Blog = {
   id: number;
@@ -29,6 +31,40 @@ export default function BlogContent() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [createOpen, setCreateOpen] = useState(false);
+  const [show, setShow] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  const triggerErrMsg = (text: string) => {
+    setMsg(text);
+    setShow(true);
+  };
+
+  const deleteReply = async (replyId: number) => {
+    if (!id) return;
+
+    try {
+      const res = await fetch(`/api/blogs/${id}/replies`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ id: replyId }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete reply");
+      }
+
+      setReplies((prev) => prev.filter((r) => r.id !== replyId));
+    } catch (err) {
+      console.error(err);
+      triggerErrMsg("Could not delete reply");
+    }
+  };
+
 
   useEffect(() => {
     if (!id) return;
@@ -75,9 +111,21 @@ export default function BlogContent() {
         {blog.blog_content}
       </div>
 
-      <h2 className="replies-title">
-        Replies ({replies.length})
-      </h2>
+      <div className="replies-header">
+        <h2 className="replies-title">
+          Replies ({replies.length})
+        </h2>
+
+        <button
+          className="reply-add"
+          onClick={() => setCreateOpen(true)}
+          title="Add reply"
+          aria-label="Add reply"
+        >
+          +
+        </button>
+      </div>
+
 
       {replies.length === 0 && (
         <div className="no-replies">No replies yet.</div>
@@ -87,9 +135,21 @@ export default function BlogContent() {
         <div className="replies">
           {replies.map((r) => (
             <div key={r.id} className="reply">
-              <div className="reply-meta">
-                {r.author_name} • {formatDate(r.created_at)}
+              <div className="reply-header">
+                <div className="reply-meta">
+                  {r.author_name} • {formatDate(r.created_at)}
+                </div>
+
+                <button
+                  className="reply-delete"
+                  onClick={() => deleteReply(r.id)}
+                  title="Delete reply"
+                  aria-label="Delete reply"
+                >
+                  ×
+                </button>
               </div>
+
               <div className="reply-content">
                 {r.reply_content}
               </div>
@@ -97,6 +157,28 @@ export default function BlogContent() {
           ))}
         </div>
       )}
+
+      <CreateReply
+        open={createOpen}
+        blogId={Number(id)}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          fetch(`/api/blogs/${id}/replies`)
+            .then((res) => res.json())
+            .then(setReplies);
+        }}
+
+        onError={triggerErrMsg}
+      />
+
+      <BottomCenMsg
+        visible={show}
+        message={msg}
+        backgroundColor="#e90e0e"
+        textColor="#f7f7f7"
+        timeAfterFadeMs={2000}
+        onClose={() => setShow(false)}
+      />
     </div>
   );
 }

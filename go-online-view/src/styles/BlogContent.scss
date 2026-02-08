@@ -41,6 +41,12 @@
         color: #222;
     }
 
+    .replies-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
     .no-replies {
         color: #666;
         font-size: 0.9rem;
@@ -67,6 +73,45 @@
             white-space: pre-wrap;
             font-size: 0.95rem;
             line-height: 1.5;
+        }
+
+        .reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .reply-add {
+            font-size: 1.5rem;
+            line-height: 1;
+            border: none;
+            background: #111;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+
+            &:hover {
+                background: #333;
+            }
+        }
+
+
+        .reply-delete {
+            border: none;
+            background: transparent;
+            color: #999;
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+
+            &:hover {
+                color: #b00020;
+            }
         }
     }
 }
