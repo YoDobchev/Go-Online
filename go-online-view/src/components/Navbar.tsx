@@ -45,13 +45,14 @@ const Navbar: React.FC = () => {
                 <a href="/search">Search</a>
                 <a href="/blogs">Blogs</a>
                 <a href="/leaderboard">LeaderBoard</a>
+                <a href="/dashboard">DashBoard</a>
                 <a href="/about">About</a>
 
                 {user &&
                     (user.role === "admin" || user.role === "moderator") && (
                         <>
-                            <a href="/reports">Reports</a>
-                            <a href="/users">Users</a>
+                            <a href="/dashboard/reports">Reports</a>
+                            <a href="/dashboard/users">Users</a>
                         </>
                     )}
             </div>

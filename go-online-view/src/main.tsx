@@ -18,6 +18,8 @@ import UserPage from "./pages/UserPage";
 import "./styles/index.scss";
 
 import { AppProviders } from "./AppProviders";
+import Dashboard from "./pages/Dashboard";
+import UsersDashboard from "./pages/UsersDashboard";
 
 
 createRoot(document.getElementById("root")!).render(
@@ -34,9 +36,10 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/blogs/:id" element={<BlogContent />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/about" element = {<About />}/>
-                <Route path="/reports" element={<Reports />} />
+                <Route path="/dashboard/reports" element={<Reports />} />
                 <Route path="/users/:username" element={<UserPage />} />
-
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard/users" element={<UsersDashboard />} />
             </Routes>
         </AppProviders>
     </StrictMode>

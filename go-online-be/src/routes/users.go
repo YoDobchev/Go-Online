@@ -19,6 +19,7 @@ func UsersRoutes() *chi.Mux {
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsModerator)
 		r.Get("/{username}", getUserHandler)
+		r.Get("/", getAllUsersHandler)
 		r.Delete("/{username}", deleteUserHandler)
 	})
 
@@ -98,4 +99,32 @@ func deleteUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]string{"message": "user deleted"})
+}
+
+func getAllUsersHandler(w http.ResponseWriter, r *http.Request) {
+	var users []database.User
+
+	if err := database.DB.Find(&users).Error; err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "could not load users",
+		})
+		return
+	}
+
+	resp := make([]map[string]any, 0, len(users))
+
+	for _, user := range users {
+		rank, _ := elo.GetRank(user.Elo)
+
+		resp = append(resp, map[string]any{
+			"id":       user.ID,
+			"email":    user.Email,
+			"username": user.Username,
+			"elo":      user.Elo,
+			"role":     user.Role,
+			"rank":     rank,
+		})
+	}
+
+	writeJSON(w, http.StatusOK, resp)
 }
