@@ -30,6 +30,34 @@ export default function BlogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const deleteReply = async (replyId: number) => {
+    if (!id) return;
+
+    const confirmed = window.confirm("Delete this reply?");
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/blogs/${id}/replies`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ id: replyId }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete reply");
+      }
+
+      setReplies((prev) => prev.filter((r) => r.id !== replyId));
+    } catch (err) {
+      alert("Could not delete reply");
+      console.error(err);
+    }
+  };
+
+
   useEffect(() => {
     if (!id) return;
 
@@ -87,9 +115,21 @@ export default function BlogContent() {
         <div className="replies">
           {replies.map((r) => (
             <div key={r.id} className="reply">
-              <div className="reply-meta">
-                {r.author_name} • {formatDate(r.created_at)}
+              <div className="reply-header">
+                <div className="reply-meta">
+                  {r.author_name} • {formatDate(r.created_at)}
+                </div>
+
+                <button
+                  className="reply-delete"
+                  onClick={() => deleteReply(r.id)}
+                  title="Delete reply"
+                  aria-label="Delete reply"
+                >
+                  ×
+                </button>
               </div>
+
               <div className="reply-content">
                 {r.reply_content}
               </div>

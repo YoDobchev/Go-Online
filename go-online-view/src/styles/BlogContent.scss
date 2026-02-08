@@ -68,5 +68,27 @@
             font-size: 0.95rem;
             line-height: 1.5;
         }
+
+        .reply-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .reply-delete {
+            border: none;
+            background: transparent;
+            color: #999;
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 0;
+            margin: 0;
+
+            &:hover {
+                color: #b00020;
+            }
+        }
     }
 }

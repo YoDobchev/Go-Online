@@ -19,6 +19,8 @@ func BlogsRoutes() *chi.Mux {
 		r.Use(middleware.IsLoggedIn)
 		r.Post("/", postNewBlogHandler)
 		r.Get("/{id}/replies", getBlogRepliesHandler)
+		r.Post("/{id}/replies", postBlogReplyHandler)
+		r.Delete("/{id}/replies", deleteBlogReplyHandler)
 	})
 
 	return r
@@ -54,6 +56,16 @@ type createBlogReq struct {
 	AuthorId int    `json:"authorId,omitempty"`
 	Title    string `json:"title"`
 	Content  string `json:"content"`
+}
+
+type createBlogReplyReq struct {
+	BlogID   int    `json:"blogId,omitempty"`
+	AuthorID int    `json:"authorId,omitempty"`
+	Content  string `json:"replyContent"`
+}
+
+type deleteBlogReplyReq struct {
+	ReplyID int `json:"id,omitempty"`
 }
 
 func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
@@ -99,4 +111,46 @@ func getBlogRepliesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, replies)
+}
+
+func postBlogReplyHandler(w http.ResponseWriter, r *http.Request) {
+	var req createBlogReplyReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	err := gogame.CreateBlogReply(req.BlogID, req.AuthorID, req.Content)
+	if err != nil {
+		http.Error(w, "could not create blog reply", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "blog reply created successfully",
+	})
+}
+
+func deleteBlogReplyHandler(w http.ResponseWriter, r *http.Request) {
+	var req deleteBlogReplyReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	user, ok := middleware.GetUserFromCtx(r)
+	if !ok {
+		http.Error(w, "user missing", http.StatusUnauthorized)
+		return
+	}
+
+	err := gogame.DeleteBlogReply(user.ID, req.ReplyID)
+	if err != nil {
+		http.Error(w, "could not delete blog reply", http.StatusInternalServerError)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"message": "blog reply deleted successfully",
+	})
 }
