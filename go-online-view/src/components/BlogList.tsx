@@ -122,6 +122,10 @@ export default function BlogsList() {
                     !error &&
                     filteredBlogs.map((blog) => (
                         <div key={blog.id} className="blogrow">
+                            <a
+                                href={`/blogs/${blog.id}`}
+                                style={{ display: "contents", color: "inherit", textDecoration: "none" }}
+                            >
                             <div className="cell muted">{blog.id}</div>
                             <div className="cell">{blog.title}</div>
                             <div className="cell">{blog.author_name}</div>
@@ -133,6 +137,7 @@ export default function BlogsList() {
                                     ? new Date(blog.updated_at).toISOString().slice(0, 10)
                                     : "—"}
                             </div>
+                            </a>
                         </div>
                     ))}
             </div>

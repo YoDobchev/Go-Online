@@ -209,3 +209,12 @@ func LoadAllBlogsFromDB() ([]map[string]any, error) {
 
 	return blogs, err
 }
+
+func LoadBlogFromDB(blogID int) (map[string]any, error) {
+	var blog map[string]any
+	err := database.DB.
+		Model(&database.Blog{}).
+		Where("id = ?", blogID).
+		First(&blog).Error
+	return blog, err
+}

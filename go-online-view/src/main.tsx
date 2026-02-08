@@ -13,6 +13,7 @@ import Blogs from "./pages/Blogs";
 import "./styles/index.scss";
 
 import { AppProviders } from "./AppProviders";
+import BlogContent from "./pages/BlogContent";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -25,6 +26,7 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/game/:gameID" element={<Game />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/blogs" element={<Blogs />} />
+                <Route path="/blogs/:id" element={<BlogContent />} />
             </Routes>
         </AppProviders>
     </StrictMode>
