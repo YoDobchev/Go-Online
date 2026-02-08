@@ -41,6 +41,12 @@
         color: #222;
     }
 
+    .replies-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
     .no-replies {
         color: #666;
         font-size: 0.9rem;
@@ -75,6 +81,23 @@
             align-items: flex-start;
             gap: 0.5rem;
         }
+
+        .reply-add {
+            font-size: 1.5rem;
+            line-height: 1;
+            border: none;
+            background: #111;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+
+            &:hover {
+                background: #333;
+            }
+        }
+
 
         .reply-delete {
             border: none;

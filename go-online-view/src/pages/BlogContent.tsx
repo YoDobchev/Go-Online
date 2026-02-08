@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import "../styles/BlogContent.scss";
 import BottomCenMsg from "../components/BottomCenMsg";
+import CreateReply from "../components/CreateReply";
 
 type Blog = {
   id: number;
@@ -31,6 +32,7 @@ export default function BlogContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [createOpen, setCreateOpen] = useState(false);
   const [show, setShow] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -109,9 +111,21 @@ export default function BlogContent() {
         {blog.blog_content}
       </div>
 
-      <h2 className="replies-title">
-        Replies ({replies.length})
-      </h2>
+      <div className="replies-header">
+        <h2 className="replies-title">
+          Replies ({replies.length})
+        </h2>
+
+        <button
+          className="reply-add"
+          onClick={() => setCreateOpen(true)}
+          title="Add reply"
+          aria-label="Add reply"
+        >
+          +
+        </button>
+      </div>
+
 
       {replies.length === 0 && (
         <div className="no-replies">No replies yet.</div>
@@ -143,6 +157,20 @@ export default function BlogContent() {
           ))}
         </div>
       )}
+
+      <CreateReply
+        open={createOpen}
+        blogId={Number(id)}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          fetch(`/api/blogs/${id}/replies`)
+            .then((res) => res.json())
+            .then(setReplies);
+        }}
+
+        onError={triggerErrMsg}
+      />
+
       <BottomCenMsg
         visible={show}
         message={msg}

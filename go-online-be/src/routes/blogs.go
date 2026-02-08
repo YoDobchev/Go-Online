@@ -14,11 +14,10 @@ func BlogsRoutes() *chi.Mux {
 	r := chi.NewRouter()
 	r.Get("/", getBlogsHandler)
 	r.Get("/{id}", getBlogByIDHandler)
-
+	r.Get("/{id}/replies", getBlogRepliesHandler)
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.IsLoggedIn)
 		r.Post("/", postNewBlogHandler)
-		r.Get("/{id}/replies", getBlogRepliesHandler)
 		r.Post("/{id}/replies", postBlogReplyHandler)
 		r.Delete("/{id}/replies", deleteBlogReplyHandler)
 	})
@@ -59,9 +58,8 @@ type createBlogReq struct {
 }
 
 type createBlogReplyReq struct {
-	BlogID   int    `json:"blogId,omitempty"`
-	AuthorID int    `json:"authorId,omitempty"`
-	Content  string `json:"replyContent"`
+	BlogID  int    `json:"blogId,omitempty"`
+	Content string `json:"replyContent"`
 }
 
 type deleteBlogReplyReq struct {
@@ -86,7 +84,7 @@ func postNewBlogHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := gogame.CreateBlog(req.Id, req.AuthorId, req.Title, req.Content)
+	err := gogame.CreateBlog(req.Id, user.ID, req.Title, req.Content)
 	if err != nil {
 		http.Error(w, "could not create blog", http.StatusInternalServerError)
 		return
@@ -114,13 +112,19 @@ func getBlogRepliesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postBlogReplyHandler(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromCtx(r)
+	if !ok {
+		http.Error(w, "user missing", http.StatusUnauthorized)
+		return
+	}
+
 	var req createBlogReplyReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid JSON", http.StatusBadRequest)
 		return
 	}
 
-	err := gogame.CreateBlogReply(req.BlogID, req.AuthorID, req.Content)
+	err := gogame.CreateBlogReply(req.BlogID, user.ID, req.Content)
 	if err != nil {
 		http.Error(w, "could not create blog reply", http.StatusInternalServerError)
 		return
