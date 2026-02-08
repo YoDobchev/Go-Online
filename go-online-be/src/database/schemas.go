@@ -99,3 +99,13 @@ type Report struct {
 	Reason    string `gorm:"type:text;not null"`
 	CreatedAt time.Time
 }
+
+type BlogReply struct {
+	ID           int       `gorm:"primaryKey"`
+	BlogID       int       `gorm:"not null"`
+	AuthorID     int       `gorm:"not null"`
+	ReplyContent string    `gorm:"type:text;not null"`
+	CreatedAt    time.Time `gorm:"not null"`
+
+	AuthorName string `gorm:"type:text;not null"`
+}

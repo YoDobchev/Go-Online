@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import "../styles/blogList.scss";
+import "../styles/BlogList.scss";
 import { useNavigate } from "react-router-dom";
 import BottomCenMsg from "./BottomCenMsg";
 import CreateBlog from "./CreateBlog";
@@ -75,7 +75,7 @@ export default function BlogsList() {
     return (
         <div className="bloglist">
             <div className="bloglist-bar">
-                <div className="title">Blogs</div>
+                <div className="title">Filter</div>
 
                 <div className="bar-right">
                     <input
@@ -149,7 +149,7 @@ export default function BlogsList() {
                                 <div className="cell muted">
                                     {blog.updated_at
                                         ? new Date(blog.updated_at).toISOString().slice(0, 10)
-                                        : "—"}
+                                        : "-"}
                                 </div>
                             </a>
                         </div>

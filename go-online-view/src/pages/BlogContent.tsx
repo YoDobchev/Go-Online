@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import "../styles/BlogContent.scss";
 
 type Blog = {
   id: number;
@@ -11,46 +12,91 @@ type Blog = {
   updated_at?: string | null;
 };
 
+type BlogReply = {
+  id: number;
+  blog_id: number;
+  author_id: number;
+  author_name: string;
+  reply_content: string;
+  created_at: string;
+};
+
 export default function BlogContent() {
   const { id } = useParams<{ id: string }>();
+
   const [blog, setBlog] = useState<Blog | null>(null);
+  const [replies, setReplies] = useState<BlogReply[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
 
-    fetch(`/api/blogs/${id}`)
-      .then((res) => {
+    Promise.all([
+      fetch(`/api/blogs/${id}`).then((res) => {
         if (!res.ok) throw new Error("Failed to load blog");
         return res.json();
+      }),
+      fetch(`/api/blogs/${id}/replies`).then((res) => {
+        if (!res.ok) throw new Error("Failed to load replies");
+        return res.json();
+      }),
+    ])
+      .then(([blogData, repliesData]) => {
+        setBlog(blogData);
+        setReplies(Array.isArray(repliesData) ? repliesData : []);
       })
-      .then(setBlog)
+
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
   const formatDate = (date?: string | null) =>
-    date ? new Date(date).toISOString().slice(0, 10) : "—";
+    date ? new Date(date).toISOString().slice(0, 10) : "-";
 
   if (loading) return <p>Loading blog…</p>;
   if (error) return <p style={{ color: "red" }}>Error: {error}</p>;
   if (!blog) return <p>Blog not found</p>;
 
   return (
-    <div className="blogcontent" style={{ maxWidth: "720px", margin: "2rem auto", padding: "1rem" }}>
-      <a href="/blogs" style={{ display: "inline-block", marginBottom: "1rem" }}>Back to Blogs</a>
+    <div className="blogcontent">
+      <a href="/blogs" className="back-link">Back to Blogs</a>
 
-      <h1 style={{ marginBottom: "0.5rem" }}>{blog.title}</h1>
-      <div style={{ marginBottom: "1rem", color: "#666" }}>
-        <span>Author: {blog.author_name} (ID: {blog.author_id})</span><br />
-        <span>Published: {formatDate(blog.published_at)}</span><br />
-        <span>Updated: {formatDate(blog.updated_at)}</span>
+      <h1>{blog.title}</h1>
+
+      <div className="meta">
+        <div>Author: {blog.author_name} (ID: {blog.author_id})</div>
+        <div>Published: {formatDate(blog.published_at)}</div>
+        <div>Updated: {formatDate(blog.updated_at)}</div>
       </div>
 
-      <div style={{ lineHeight: "1.6", fontSize: "1rem", whiteSpace: "pre-wrap", border: "1px solid #eee", padding: "1rem", borderRadius: "10px", background: "#fafafa" }}>
+      <div className="content">
         {blog.blog_content}
       </div>
+
+      <h2 className="replies-title">
+        Replies ({replies.length})
+      </h2>
+
+      {replies.length === 0 && (
+        <div className="no-replies">No replies yet.</div>
+      )}
+
+      {replies.length > 0 && (
+        <div className="replies">
+          {replies.map((r) => (
+            <div key={r.id} className="reply">
+              <div className="reply-meta">
+                {r.author_name} • {formatDate(r.created_at)}
+              </div>
+              <div className="reply-content">
+                {r.reply_content}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

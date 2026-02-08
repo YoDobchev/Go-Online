@@ -9,11 +9,13 @@ import Logout from "./pages/Logout";
 import Game from "./pages/Game";
 import Profile from "./pages/Profile";
 import Blogs from "./pages/Blogs";
+import Leaderboard from "./pages/Leaderboard";
 
 import "./styles/index.scss";
 
 import { AppProviders } from "./AppProviders";
 import BlogContent from "./pages/BlogContent";
+import About from "./pages/About";
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
@@ -27,6 +29,8 @@ createRoot(document.getElementById("root")!).render(
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/blogs" element={<Blogs />} />
                 <Route path="/blogs/:id" element={<BlogContent />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/about" element = {<About />}/>
             </Routes>
         </AppProviders>
     </StrictMode>

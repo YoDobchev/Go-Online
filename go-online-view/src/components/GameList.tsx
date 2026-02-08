@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { API_BASE } from "../config";
-import "../styles/gamelist.scss";
+import "../styles/GameList.scss";
 import { useNavigate } from "react-router-dom";
 import BottomCenMsg from "./BottomCenMsg";
 import CreateGame from "./CreateGame";
@@ -249,21 +249,21 @@ const GameList = ({
                             href={`/game/${g.id}`}
                         >
                             <div className="cell muted">{g.id}</div>
-                            <div className="cell">{g.name ?? "—"}</div>
-                            <div className="cell">{g.status ?? "—"}</div>
+                            <div className="cell">{g.name ?? "-"}</div>
+                            <div className="cell">{g.status ?? "-"}</div>
                             <div className="cell">
                                 {g.boardSize
                                     ? `${g.boardSize}x${g.boardSize}`
-                                    : "—"}
+                                    : "-"}
                             </div>
                             <div className="cell">
                                 {g.ranked === undefined
-                                    ? "—"
+                                    ? "-"
                                     : g.ranked
                                       ? "Ranked"
                                       : "Unranked"}
                             </div>
-                            <div className="cell">{g.players ?? "—"} / 2</div>
+                            <div className="cell">{g.players ?? "-"} / 2</div>
                         </a>
                     ))}
 
