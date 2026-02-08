@@ -272,21 +272,8 @@ func WsGameHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if game.GameProgress == gogame.GAME_ENDED {
-			// hub.broadcast(map[string]any{
-			// 	"type": "game_ended",
-			// 	"data": map[string]any{
-			// 		"white_points": game.WhitePoints,
-			// 		"black_points": game.BlackPoints,
-			// 		"winner":       game.WinnerIndex,
-			// 		"reason":       game.GameEndedReason,
-			// 		"moveNum":      game.MoveNum,
-			// 	},
-			// })
-
 			delete(gogame.PlayerToGame, game.Players[0])
 			delete(gogame.PlayerToGame, game.Players[1])
-
-			// hub.shutdown()
 
 			break
 		}

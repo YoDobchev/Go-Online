@@ -19,17 +19,6 @@ type StatusFilter = "all" | "open" | "running" | "finished";
 type RankedFilter = "all" | "ranked" | "unranked";
 type SizeFilter = "all" | "9" | "13" | "19";
 
-// type GameListResponse =
-//   | Game[]
-//   | {
-//       games?: Game[];
-//       items?: Game[];
-//       data?: Game[];
-//       page?: number;
-//       totalPages?: number;
-//       pages?: number;
-//     };
-
 function isObject(v: unknown): v is Record<string, unknown> {
     return typeof v === "object" && v !== null;
 }
