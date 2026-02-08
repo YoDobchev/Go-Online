@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "../styles/UsersDashboard.scss";
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import Navbar from "../components/Navbar";
 
 type User = {
@@ -70,6 +71,8 @@ export default function UsersDashboard() {
         </>
     );
 =======
+=======
+>>>>>>> Stashed changes
 
 type User = {
   id: number;
@@ -134,5 +137,8 @@ export default function UsersDashboard() {
       </div>
     </div>
   );
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 }

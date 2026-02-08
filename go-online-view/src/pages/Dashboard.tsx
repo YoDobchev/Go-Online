@@ -8,7 +8,10 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 =======
+=======
+>>>>>>> Stashed changes
   useEffect(() => {
     if (!user) {
       navigate("/", { replace: true });
@@ -20,6 +23,9 @@ export default function Dashboard() {
     }
   }, [user, navigate]);
 
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
   if (!user) return null;
 
