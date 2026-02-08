@@ -218,3 +218,21 @@ func LoadBlogFromDB(blogID int) (map[string]any, error) {
 		First(&blog).Error
 	return blog, err
 }
+
+func CreateBlog(id int, authorID int, title string, content string) error {
+	var author database.User
+	if err := database.DB.First(&author, authorID).Error; err != nil {
+		return err
+	}
+
+	blog := database.Blog{
+		ID:          id,
+		AuthorID:    authorID,
+		AuthorName:  author.Username,
+		Title:       title,
+		BlogContent: content,
+		PublishedAt: time.Now(),
+	}
+
+	return database.DB.Create(&blog).Error
+}

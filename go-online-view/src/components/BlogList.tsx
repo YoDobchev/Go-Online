@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import "../styles/blogList.scss";
+import { useNavigate } from "react-router-dom";
+import BottomCenMsg from "./BottomCenMsg";
+import CreateBlog from "./CreateBlog";
 
 type Blog = {
     id: number;
@@ -14,11 +17,21 @@ export default function BlogsList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // filters
     const [titleFilter, setTitleFilter] = useState("");
     const [authorFilter, setAuthorFilter] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+
+    const navigate = useNavigate();
+
+    const [createOpen, setCreateOpen] = useState(false);
+    const [show, setShow] = useState(false);
+    const [msg, setMsg] = useState("");
+
+    const triggerErrMsg = (text: string) => {
+        setMsg(text);
+        setShow(true);
+    };
 
     useEffect(() => {
         fetch("/api/blogs")
@@ -95,14 +108,15 @@ export default function BlogsList() {
                         onChange={(e) => setToDate(e.target.value)}
                     />
 
-                    {/* + button kept exactly as requested */}
-                    <button className="plus">
+                    <button className="plus"
+                        onClick={() => setCreateOpen(true)}
+                        aria-label="Create blog"
+                        title="Create blog">
                         <span>+</span>
                     </button>
                 </div>
             </div>
 
-            {/* Table */}
             <div className="bloglist-box">
                 <div className="bloglist-header">
                     <div>ID</div>
@@ -126,21 +140,39 @@ export default function BlogsList() {
                                 href={`/blogs/${blog.id}`}
                                 style={{ display: "contents", color: "inherit", textDecoration: "none" }}
                             >
-                            <div className="cell muted">{blog.id}</div>
-                            <div className="cell">{blog.title}</div>
-                            <div className="cell">{blog.author_name}</div>
-                            <div className="cell">
-                                {new Date(blog.published_at).toISOString().slice(0, 10)}
-                            </div>
-                            <div className="cell muted">
-                                {blog.updated_at
-                                    ? new Date(blog.updated_at).toISOString().slice(0, 10)
-                                    : "—"}
-                            </div>
+                                <div className="cell muted">{blog.id}</div>
+                                <div className="cell">{blog.title}</div>
+                                <div className="cell">{blog.author_name}</div>
+                                <div className="cell">
+                                    {new Date(blog.published_at).toISOString().slice(0, 10)}
+                                </div>
+                                <div className="cell muted">
+                                    {blog.updated_at
+                                        ? new Date(blog.updated_at).toISOString().slice(0, 10)
+                                        : "—"}
+                                </div>
                             </a>
                         </div>
                     ))}
             </div>
+
+            <CreateBlog
+                open={createOpen}
+                onClose={() => setCreateOpen(false)}
+                onCreated={(id) => navigate(`/blogs/${id}`)}
+                onError={triggerErrMsg}
+            />
+
+            <BottomCenMsg
+                            visible={show}
+                            message={msg}
+                            backgroundColor="#e90e0e"
+                            textColor="#f7f7f7"
+                            timeAfterFadeMs={2000}
+                            onClose={() => setShow(false)}
+                        />
         </div>
+
+        
     );
 }
