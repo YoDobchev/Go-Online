@@ -5,7 +5,7 @@ import "../styles/GameCurrIn.scss";
 const GameCurrIn: React.FC = () => {
     const { user, loading } = useContext(UserContext);
 
-    if (loading || !user) return <div>Checking game status...</div>;
+    if (loading || !user) return <></>;
 
     return (
         <>

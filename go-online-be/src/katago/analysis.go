@@ -129,10 +129,6 @@ func (e *Engine) Analyze(ctx context.Context, q Query) (Response, error) {
 	}
 }
 
-func SGFCoord(x, y int) string {
-	return string([]byte{byte('a' + x), byte('a' + y)})
-}
-
 func BW(color uint8) string {
 	if color == 2 {
 		return "b"

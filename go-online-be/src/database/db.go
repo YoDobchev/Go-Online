@@ -31,7 +31,7 @@ func Connect() {
 		log.Fatalf("Error loading db: %v", err)
 	}
 
-	if err := DB.AutoMigrate(&User{}, &Session{}, &Game{}, &GameMove{}, &GameSnapshot{}); err != nil {
+	if err := DB.AutoMigrate(&User{}, &Session{}, &Game{}, &GameMove{}, &GameSnapshot{}, &Blog{}, &BlogReply{}); err != nil {
 		log.Fatalf("auto-migrate failed: %v", err)
 	}
 }

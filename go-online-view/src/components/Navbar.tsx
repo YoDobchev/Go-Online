@@ -62,7 +62,7 @@ const Navbar: React.FC = () => {
                 ) : user ? (
                     <>
                         <p>
-                            Hello, <b>{user.username}</b>
+                            Hi, <b>{user.username}</b>
                         </p>
                         <div className="profile-wrap" ref={menuRef}>
                             <button

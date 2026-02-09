@@ -33,6 +33,7 @@ const CreateBlog: React.FC<Props> = ({ open, onClose, onCreated, onError }) => {
 
     const createNewBlog = async () => {
         if (!id || !authorId || !title || !content) {
+            console.log(id + " " + authorId + " " + title + " " + content);
             onError?.("All fields are required");
             return;
         }
@@ -92,7 +93,13 @@ const CreateBlog: React.FC<Props> = ({ open, onClose, onCreated, onError }) => {
                     <input
                         type="number"
                         value={id}
-                        onChange={(e) => setId(Number(e.target.value))}
+                        onChange={(e) =>
+                            setId(
+                                e.target.value === ""
+                                    ? ""
+                                    : Number(e.target.value),
+                            )
+                        }
                         disabled={creating}
                     />
                 </div>
@@ -102,7 +109,13 @@ const CreateBlog: React.FC<Props> = ({ open, onClose, onCreated, onError }) => {
                     <input
                         type="number"
                         value={authorId}
-                        onChange={(e) => setAuthorId(Number(e.target.value))}
+                        onChange={(e) =>
+                            setAuthorId(
+                                e.target.value === ""
+                                    ? ""
+                                    : Number(e.target.value),
+                            )
+                        }
                         disabled={creating}
                     />
                 </div>
@@ -112,7 +125,10 @@ const CreateBlog: React.FC<Props> = ({ open, onClose, onCreated, onError }) => {
                     <input
                         type="text"
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => {
+                            console.log(e.target.value);
+                            setTitle(e.target.value);
+                        }}
                         disabled={creating}
                     />
                 </div>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
 
 const Register: React.FC = () => {
@@ -7,6 +8,8 @@ const Register: React.FC = () => {
     const [password, setPassword] = useState<string>("");
     const [message, setMessage] = useState<string>("");
     const [loading, setLoading] = useState<boolean>(false);
+
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -23,6 +26,8 @@ const Register: React.FC = () => {
 
             const data = await res.json();
             setMessage(data.message ?? "Registration successful");
+
+            setTimeout(() => navigate("/login"), 500);
         } catch (err) {
             console.error(err);
             setMessage("Failed or user already exists");

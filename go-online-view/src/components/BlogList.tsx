@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import "../styles/BlogList.scss";
 import { useNavigate } from "react-router-dom";
 import BottomCenMsg from "./BottomCenMsg";
 import CreateBlog from "./CreateBlog";
+import { UserContext } from "../context/UserContext";
 
 type Blog = {
     id: number;
@@ -27,6 +28,8 @@ export default function BlogsList() {
     const [createOpen, setCreateOpen] = useState(false);
     const [show, setShow] = useState(false);
     const [msg, setMsg] = useState("");
+
+    const { user } = useContext(UserContext);
 
     const triggerErrMsg = (text: string) => {
         setMsg(text);
@@ -113,14 +116,16 @@ export default function BlogsList() {
                         onChange={(e) => setToDate(e.target.value)}
                     />
 
-                    <button
-                        className="plus"
-                        onClick={() => setCreateOpen(true)}
-                        aria-label="Create blog"
-                        title="Create blog"
-                    >
-                        <span>+</span>
-                    </button>
+                    {user && user.role === "admin" && (
+                        <button
+                            className="plus"
+                            onClick={() => setCreateOpen(true)}
+                            aria-label="Create blog"
+                            title="Create blog"
+                        >
+                            <span>+</span>
+                        </button>
+                    )}
                 </div>
             </div>
 
